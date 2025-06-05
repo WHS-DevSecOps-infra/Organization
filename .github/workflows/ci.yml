@@ -16,7 +16,7 @@ jobs:
       - uses: aws-actions/configure-aws-credentials@v4
         with:
           aws-region: ap-northeast-2
-          role-to-assume: arn:aws:iam::433331841346:role/cloudfencedemorole
+          role-to-assume: arn:aws:iam::433331841346:role/Organization-role
 
       - uses: hashicorp/setup-terraform@v1
         with:
