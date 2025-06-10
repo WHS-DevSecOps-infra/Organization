@@ -20,7 +20,7 @@ jobs:
         uses: aws-actions/configure-aws-credentials@v4
         with:
           aws-region: ap-northeast-2
-          role-to-assume: arn:aws:iam::502676416967:role/OIDC-org
+          role-to-assume: arn:aws:iam::193186106478:role/Organization-role
 
       - uses: hashicorp/setup-terraform@v1
         with:
