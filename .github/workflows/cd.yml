@@ -1,0 +1,40 @@
+name: Org CD
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  id-token: write
+
+jobs:
+  terraform-cd:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+      - uses: aws-actions/configure-aws-credentials@v4
+        with:
+          aws-region: ap-northeast-2
+          role-to-assume: arn:aws:iam::433331841346:role/Organization-role
+
+      - uses: hashicorp/setup-terraform@v1
+        with:
+          terraform_version: 1.4.0
+
+      - run: terraform init
+      - run: terraform apply -auto-approve
+
+      # - name: Email on Failure
+      #   if: failure()
+      #   uses: dawidd6/action-send-mail@v3
+      #   with:
+      #     server_address: smtp.gmail.com
+      #     server_port: 587
+      #     username: ${{ secrets.EMAIL_USERNAME }}
+      #     password: ${{ secrets.EMAIL_PASSWORD }}
+      #     subject: "Terraform CD Failed"
+      #     to: yourteam@email.com
+      #     from: Terraform CD <your@email.com>
+      #     body: "Terraform Apply failed. Please check GitHub Actions logs."
