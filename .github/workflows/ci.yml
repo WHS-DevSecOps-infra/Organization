@@ -15,8 +15,7 @@ jobs:
       - name: Checkout source code
         uses: actions/checkout@v3
 
-        
-      - name: Configure AWS Credentials
+      - name: Configure AWS Credentials(OIDC)
         uses: aws-actions/configure-aws-credentials@v4
         with:
           aws-region: ap-northeast-2
@@ -26,7 +25,29 @@ jobs:
         with:
           terraform_version: 1.4.0
 
-
       - run: terraform init
       - run: terraform validate
+      - run: terraform fmt -check
       - run: terraform plan
+
+      - name: Run Trivy for IaC Security Scan
+        uses: aquasecurity/trivy-action@master
+        with:
+          scan-type: "config"
+          scan-ref: .
+
+      # - name: Run Infracost
+      #   uses: infracost/actions/setup@v2
+      #   with:
+      #     api-key: ${{ secrets.INFRACOST_API_KEY }}
+
+      # - name: Generate Infracost Report
+      #   run: |
+      #     infracost breakdown --path=. \
+      #       --format=json --out-file=/tmp/infracost.json
+
+      # - name: Post Infracost Comment
+      #   run: |
+      #     infracost comment github --path=/tmp/infracost.json \
+      #       --repo=$GITHUB_REPOSITORY --github-token=${{ secrets.GITHUB_TOKEN }} \
+      #       --pull-request=${{ github.event.pull_request.number }}

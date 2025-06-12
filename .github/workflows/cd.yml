@@ -4,7 +4,7 @@ on:
   push:
     branches: [main]
   workflow_dispatch:
-  
+
 permissions:
   contents: read
   id-token: write
@@ -26,6 +26,15 @@ jobs:
       - run: terraform init
       - run: terraform apply -auto-approve
 
-
-      - run: terraform init
-      - run: terraform apply -auto-approve
+      # - name: Email on Failure
+      #   if: failure()
+      #   uses: dawidd6/action-send-mail@v3
+      #   with:
+      #     server_address: smtp.gmail.com
+      #     server_port: 587
+      #     username: ${{ secrets.EMAIL_USERNAME }}
+      #     password: ${{ secrets.EMAIL_PASSWORD }}
+      #     subject: "Terraform CD Failed"
+      #     to: yourteam@email.com
+      #     from: Terraform CD <your@email.com>
+      #     body: "Terraform Apply failed. Please check GitHub Actions logs."
