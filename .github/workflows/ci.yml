@@ -28,7 +28,14 @@ jobs:
       - name: Detect Changed Folder
         id: detect
         run: |
-          FILES=$(git diff --name-only origin/main ${{ github.sha }})
+          if [ "$GITHUB_EVENT_NAME" = "pull_request" ]; then
+            echo "Running in pull_request event."
+            FILES=$(git diff --name-only origin/main...HEAD)
+          else
+            echo "Running in push event (e.g., after merge)."
+            FILES=$(git diff --name-only HEAD^1 HEAD)
+          fi
+
           echo "Changed files:"
           echo "$FILES"
 
@@ -42,9 +49,10 @@ jobs:
             echo "account=PROD" >> $GITHUB_OUTPUT
             echo "work_dir=prod-team-account" >> $GITHUB_OUTPUT
           else
-            echo "No relevant folder changed. Skipping rest of workflow."
-            echo "skip=true" >> $GITHUB_OUTPUT
+            echo "No matching folder changed."
+            exit 1
           fi
+
       # 4. AWS Credentials 설정
       - name: Configure AWS Credentials via OIDC
         if: steps.detect.outputs.skip != 'true'
