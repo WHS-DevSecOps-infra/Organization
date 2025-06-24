@@ -29,15 +29,15 @@ jobs:
       - name: Detect Changed Folder
         id: detect
         run: |
+          # PR 이벤트에서 변경된 파일 감지
           if [ "$GITHUB_EVENT_NAME" = "pull_request" ]; then
             echo "Running in pull_request event."
-            # PR 커밋과 origin/main의 차이 비교
+            # PR의 커밋과 origin/main의 차이를 비교
             FILES=$(git diff --name-only origin/main..${{ github.sha }})
           else
             echo "Running in push event (e.g., after merge)."
-            # 병합된 커밋을 기준으로 변경된 파일 감지
-            MERGE_BASE=$(git merge-base origin/main HEAD)
-            FILES=$(git diff --name-only $MERGE_BASE..HEAD)
+            # 머지 후 push 이벤트에서 변경된 파일을 감지
+            FILES=$(git diff --name-only origin/main..HEAD)
           fi
 
           echo "Changed files:"
@@ -98,15 +98,15 @@ jobs:
       - name: Detect Changed Folder
         id: detect
         run: |
+          # PR 이벤트에서 변경된 파일 감지
           if [ "$GITHUB_EVENT_NAME" = "pull_request" ]; then
             echo "Running in pull_request event."
-            # PR 커밋과 origin/main의 차이 비교
+            # PR의 커밋과 origin/main의 차이를 비교
             FILES=$(git diff --name-only origin/main..${{ github.sha }})
           else
             echo "Running in push event (e.g., after merge)."
-            # 병합된 커밋을 기준으로 변경된 파일 감지
-            MERGE_BASE=$(git merge-base origin/main HEAD)
-            FILES=$(git diff --name-only $MERGE_BASE..HEAD)
+            # 머지 후 push 이벤트에서 변경된 파일을 감지
+            FILES=$(git diff --name-only origin/main..HEAD)
           fi
 
           echo "Changed files:"
