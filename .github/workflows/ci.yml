@@ -20,9 +20,6 @@ jobs:
       - name: Checkout Code
         uses: actions/checkout@v3
 
-<<<<<<< HEAD
-      - name: Configure AWS Credentials(OIDC)
-=======
       # 2. 최신 main 브랜치를 fetch
       - name: Fetch origin/main
         run: git fetch origin main
@@ -51,7 +48,6 @@ jobs:
       # 4. AWS Credentials 설정
       - name: Configure AWS Credentials via OIDC
         if: steps.detect.outputs.skip != 'true'
->>>>>>> 9503603 (ci/cd test)
         uses: aws-actions/configure-aws-credentials@v4
         with:
           aws-region: ap-northeast-2
@@ -71,34 +67,6 @@ jobs:
         with:
           terraform_version: 1.4.0
 
-<<<<<<< HEAD
-      - run: terraform init
-      - run: terraform validate
-      - run: terraform fmt -check
-      - run: terraform plan
-
-      - name: Run Trivy for IaC Security Scan
-        uses: aquasecurity/trivy-action@master
-        with:
-          scan-type: "config"
-          scan-ref: .
-
-      # - name: Run Infracost
-      #   uses: infracost/actions/setup@v2
-      #   with:
-      #     api-key: ${{ secrets.INFRACOST_API_KEY }}
-
-      # - name: Generate Infracost Report
-      #   run: |
-      #     infracost breakdown --path=. \
-      #       --format=json --out-file=/tmp/infracost.json
-
-      # - name: Post Infracost Comment
-      #   run: |
-      #     infracost comment github --path=/tmp/infracost.json \
-      #       --repo=$GITHUB_REPOSITORY --github-token=${{ secrets.GITHUB_TOKEN }} \
-      #       --pull-request=${{ github.event.pull_request.number }}
-=======
       # 7. terraform init
       - name: Terraform Init
         if: steps.detect.outputs.skip != 'true'
@@ -170,4 +138,3 @@ jobs:
         env:
           INFRACOST_API_KEY: ${{ secrets.INFRACOST_API_KEY }}
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
->>>>>>> 9503603 (ci/cd test)

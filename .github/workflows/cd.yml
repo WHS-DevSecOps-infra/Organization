@@ -3,9 +3,6 @@ name: Terraform Plan and Apply
 on:
   pull_request:
     branches: [main]
-<<<<<<< HEAD
-  workflow_dispatch:
-=======
     paths:
       - 'operation-team-account/**'
       - 'identity-team-account/**'
@@ -13,7 +10,6 @@ on:
   push:
     branches:
       - main  # PR이 main에 merge되었을 때만 apply 실행
->>>>>>> 9503603 (ci/cd test)
 
 permissions:
   contents: read
@@ -109,20 +105,6 @@ jobs:
             exit 1
           fi
 
-<<<<<<< HEAD
-      # - name: Email on Failure
-      #   if: failure()
-      #   uses: dawidd6/action-send-mail@v3
-      #   with:
-      #     server_address: smtp.gmail.com
-      #     server_port: 587
-      #     username: ${{ secrets.EMAIL_USERNAME }}
-      #     password: ${{ secrets.EMAIL_PASSWORD }}
-      #     subject: "Terraform CD Failed"
-      #     to: yourteam@email.com
-      #     from: Terraform CD <your@email.com>
-      #     body: "Terraform Apply failed. Please check GitHub Actions logs."
-=======
 
       - name: Configure AWS Credentials
         uses: aws-actions/configure-aws-credentials@v4
@@ -142,4 +124,3 @@ jobs:
       - name: Terraform Apply
         run: terraform apply -auto-approve
         working-directory: ${{ steps.detect.outputs.work_dir }}
->>>>>>> 9503603 (ci/cd test)
