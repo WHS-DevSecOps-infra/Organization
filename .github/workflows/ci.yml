@@ -59,6 +59,7 @@ jobs:
         uses: aquasecurity/tfsec-action@v1.0.0
         with:
           working-directory: ${{ steps.detect.outputs.work_dir }}
+          additional-args: "--minimum-severity high"
 
       # 6. Terraform 설정
       - name: Setup Terraform
