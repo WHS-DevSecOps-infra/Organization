@@ -30,19 +30,18 @@ jobs:
         run: |
           if [ "$GITHUB_EVENT_NAME" = "pull_request" ]; then
             echo "Running in pull_request event."
-            # PR 커밋과 origin/main의 차이를 비교
+            # PR 커밋과 origin/main의 차이 비교
             FILES=$(git diff --name-only origin/main..${{ github.sha }})
           else
             echo "Running in push event (e.g., after merge)."
-            # 머지 후 변경된 파일 감지
-            # HEAD~1과 HEAD를 비교하여 변경된 파일을 감지
-            FILES=$(git diff --name-only HEAD~1 HEAD)
+            # 병합된 커밋을 기준으로 변경된 파일 감지
+            MERGE_BASE=$(git merge-base origin/main HEAD)
+            FILES=$(git diff --name-only $MERGE_BASE..HEAD)
           fi
 
           echo "Changed files:"
           echo "$FILES"
 
-          # 폴더 변경 사항 감지
           if echo "$FILES" | grep -q '^operation-team-account/'; then
             echo "account=OPERATION" >> $GITHUB_OUTPUT
             echo "work_dir=operation-team-account" >> $GITHUB_OUTPUT
