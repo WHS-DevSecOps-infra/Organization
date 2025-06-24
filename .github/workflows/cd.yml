@@ -29,7 +29,7 @@ jobs:
       - name: Detect Changed Folder
         id: detect
         run: |
-          FILES=$(git diff --name-only origin/main ${{ github.sha }})
+          FILES=$(git diff --name-only origin/main...${{ github.sha }})
           echo "Changed files:"
           echo "$FILES"
 
