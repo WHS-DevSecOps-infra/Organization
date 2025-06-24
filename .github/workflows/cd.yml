@@ -29,7 +29,14 @@ jobs:
       - name: Detect Changed Folder
         id: detect
         run: |
-          FILES=$(git diff --name-only origin/main..${{ github.sha }})
+          if [ "$GITHUB_EVENT_NAME" = "pull_request" ]; then
+            echo "Running in pull_request event."
+            FILES=$(git diff --name-only origin/main...HEAD)
+          else
+            echo "Running in push event (e.g., after merge)."
+            FILES=$(git diff --name-only HEAD^1 HEAD)
+          fi
+
           echo "Changed files:"
           echo "$FILES"
 
@@ -46,6 +53,7 @@ jobs:
             echo "No matching folder changed."
             exit 1
           fi
+
 
       - name: Configure AWS Credentials
         uses: aws-actions/configure-aws-credentials@v4
@@ -87,7 +95,7 @@ jobs:
       - name: Detect Changed Folder
         id: detect
         run: |
-          FILES=$(git diff --name-only origin/main..${{ github.sha }})
+          FILES=$(git diff --name-only HEAD^1 HEAD)
           echo "Changed files:"
           echo "$FILES"
 

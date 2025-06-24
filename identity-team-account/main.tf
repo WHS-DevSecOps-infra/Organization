@@ -5,9 +5,6 @@ provider "aws" {
 
 # S3 버킷 생성
 resource "aws_s3_bucket" "my_bucket" {
-  bucket = "my-unique-bucket-name-terraform"  # 고유한 이름을 사용해야 합니다.
+  bucket = "my-unique-bucket-name-terraformmm"  # 고유한 이름을 사용해야 합니다.
 }
 
-# resource "aws_s3_bucket" "my_bucket" {
-#   bucket = "my-unique-bucket-name-terraformmm"  # 고유한 이름을 사용해야 합니다.
-# }
