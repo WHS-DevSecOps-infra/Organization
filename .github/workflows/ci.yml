@@ -1,4 +1,4 @@
-name: Monitoring CI
+name: Organization CI
 
 on:
   push:
