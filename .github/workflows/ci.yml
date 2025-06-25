@@ -28,24 +28,7 @@ jobs:
       - name: Detect Changed Folder
         id: detect
         run: |
-          if [ "$GITHUB_EVENT_NAME" = "pull_request" ]; then
-            echo "Running in pull_request event."
-<<<<<<< HEAD
-            FILES=$(git diff --name-only origin/main...HEAD)
-          else
-            echo "Running in push event (e.g., after merge)."
-            FILES=$(git diff --name-only HEAD^1 HEAD)
-=======
-            # PR 커밋과 origin/main의 차이 비교
-            FILES=$(git diff --name-only origin/main..${{ github.sha }})
-          else
-            echo "Running in push event (e.g., after merge)."
-            # 병합된 커밋을 기준으로 변경된 파일 감지
-            MERGE_BASE=$(git merge-base origin/main HEAD)
-            FILES=$(git diff --name-only $MERGE_BASE..HEAD)
->>>>>>> parent of c868731 (Merge pull request #22 from WHS-DevSecOps-infra/feat/#4)
-          fi
-
+          FILES=$(git diff --name-only origin/main ${{ github.sha }})
           echo "Changed files:"
           echo "$FILES"
 
@@ -59,10 +42,9 @@ jobs:
             echo "account=PROD" >> $GITHUB_OUTPUT
             echo "work_dir=prod-team-account" >> $GITHUB_OUTPUT
           else
-            echo "No matching folder changed."
-            exit 1
+            echo "No relevant folder changed. Skipping rest of workflow."
+            echo "skip=true" >> $GITHUB_OUTPUT
           fi
-
       # 4. AWS Credentials 설정
       - name: Configure AWS Credentials via OIDC
         if: steps.detect.outputs.skip != 'true'
@@ -77,7 +59,6 @@ jobs:
         uses: aquasecurity/tfsec-action@v1.0.0
         with:
           working-directory: ${{ steps.detect.outputs.work_dir }}
-          additional-args: "--minimum-severity high"
 
       # 6. Terraform 설정
       - name: Setup Terraform
