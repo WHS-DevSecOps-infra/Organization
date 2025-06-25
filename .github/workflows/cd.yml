@@ -28,22 +28,25 @@ jobs:
       - name: Detect Changed Files (only in PR event)
         id: detect
         run: |
+          echo "Running in $GITHUB_EVENT_NAME event."
+          
           if [ "$GITHUB_EVENT_NAME" = "pull_request" ]; then
-            echo "Running in pull_request event."
-            # PR의 커밋과 origin/main의 차이를 비교
+            # PR 커밋과 origin/main의 차이를 비교
             FILES=$(git diff --name-only origin/main..${{ github.sha }})
             echo "Changed files in PR:"
             echo "$FILES"
           else
-            echo "Running in push event (e.g., after merge)."
-            # 머지 후에는 파일 변경을 감지하지 않고 바로 apply 실행
-            echo "Skipping file detection in push event."
-            exit 0  # 머지 후 이벤트에서는 파일 감지를 건너뛰고 바로 종료
+            # 머지 후에는 git merge-base를 사용하여 병합 기준 커밋 찾기
+            MERGE_BASE=$(git merge-base origin/main HEAD)
+            echo "Merge base: $MERGE_BASE"
+            # 병합 기준부터 HEAD까지 변경된 파일 감지
+            FILES=$(git diff --name-only $MERGE_BASE..HEAD)
+            echo "Changed files after merge:"
+            echo "$FILES"
           fi
 
-          # 변경된 파일이 있으면 계속 진행
           if [ -z "$FILES" ]; then
-            echo "No files changed in PR. Skipping Terraform plan."
+            echo "No files changed. Skipping Terraform plan."
             exit 0  # 파일이 없으면 작업을 건너뛰고 종료
           fi
 

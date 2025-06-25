@@ -30,10 +30,20 @@ jobs:
         run: |
           if [ "$GITHUB_EVENT_NAME" = "pull_request" ]; then
             echo "Running in pull_request event."
+<<<<<<< HEAD
             FILES=$(git diff --name-only origin/main...HEAD)
           else
             echo "Running in push event (e.g., after merge)."
             FILES=$(git diff --name-only HEAD^1 HEAD)
+=======
+            # PR 커밋과 origin/main의 차이 비교
+            FILES=$(git diff --name-only origin/main..${{ github.sha }})
+          else
+            echo "Running in push event (e.g., after merge)."
+            # 병합된 커밋을 기준으로 변경된 파일 감지
+            MERGE_BASE=$(git merge-base origin/main HEAD)
+            FILES=$(git diff --name-only $MERGE_BASE..HEAD)
+>>>>>>> parent of c868731 (Merge pull request #22 from WHS-DevSecOps-infra/feat/#4)
           fi
 
           echo "Changed files:"
