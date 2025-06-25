@@ -1,15 +1,14 @@
-name: Terraform Plan and Apply
+# PR에서 변경된 파일을 감지하여 terraform plan을 실행하는 워크플로우
+name: Terraform Plan
 
 on:
   pull_request:
-    branches: [main]
+    branches:
+      - main
     paths:
       - 'operation-team-account/**'
       - 'identity-team-account/**'
       - 'prod-team-account/**'
-  push:
-    branches:
-      - main  # PR이 main에 merge되었을 때만 apply 실행
 
 permissions:
   contents: read
@@ -18,39 +17,26 @@ permissions:
 jobs:
   terraform-plan:
     runs-on: ubuntu-latest
+
     steps:
       - name: Checkout
         uses: actions/checkout@v3
 
       - name: Fetch origin/main
-        run: git fetch origin main  # origin/main을 fetch
+        run: git fetch origin main
 
-      - name: Detect Changed Files (only in PR event)
+      - name: Detect Changed Files
         id: detect
         run: |
-          echo "Running in $GITHUB_EVENT_NAME event."
-          
-          if [ "$GITHUB_EVENT_NAME" = "pull_request" ]; then
-            # PR 커밋과 origin/main의 차이를 비교
-            FILES=$(git diff --name-only origin/main..${{ github.sha }})
-            echo "Changed files in PR:"
-            echo "$FILES"
-          else
-            # 머지 후에는 git merge-base를 사용하여 병합 기준 커밋 찾기
-            MERGE_BASE=$(git merge-base origin/main HEAD)
-            echo "Merge base: $MERGE_BASE"
-            # 병합 기준부터 HEAD까지 변경된 파일 감지
-            FILES=$(git diff --name-only $MERGE_BASE..HEAD)
-            echo "Changed files after merge:"
-            echo "$FILES"
-          fi
-
+          echo "Running in pull_request event."
+          FILES=$(git diff --name-only origin/main..${{ github.sha }})
+          echo "Changed files in PR:"
+          echo "$FILES"
           if [ -z "$FILES" ]; then
             echo "No files changed. Skipping Terraform plan."
-            exit 0  # 파일이 없으면 작업을 건너뛰고 종료
+            exit 0
           fi
 
-          # 폴더 변경 사항 감지
           if echo "$FILES" | grep -q '^operation-team-account/'; then
             echo "account=OPERATION" >> $GITHUB_OUTPUT
             echo "work_dir=operation-team-account" >> $GITHUB_OUTPUT
@@ -63,7 +49,6 @@ jobs:
           else
             echo "No matching folder changed."
             exit 1
-          fi
 
       - name: Configure AWS Credentials
         uses: aws-actions/configure-aws-credentials@v4
@@ -88,10 +73,23 @@ jobs:
         working-directory: ${{ steps.detect.outputs.work_dir }}
         continue-on-error: true
 
+
+---
+# Push(머지 후)에서 terraform apply를 실행하는 워크플로우
+name: Terraform Apply
+
+on:
+  push:
+    branches:
+      - main  # PR이 main에 merge되었을 때만 apply 실행
+
+permissions:
+  contents: read
+  id-token: write
+
+jobs:
   terraform-apply:
-    if: github.event_name == 'push' && github.ref == 'refs/heads/main'  # only after merge
     runs-on: ubuntu-latest
-    needs: terraform-plan  # terraform-plan 작업이 완료된 후에 실행
 
     steps:
       - name: Checkout
@@ -102,9 +100,9 @@ jobs:
 
       - name: Configure AWS Credentials
         uses: aws-actions/configure-aws-credentials@v4
-        with:
-          aws-region: ap-northeast-2
-          role-to-assume: ${{ secrets[format('ROLE_ARN_{0}', steps.detect.outputs.account)] }}
+        # with:
+        #   aws-region: ap-northeast-2
+        #   role-to-assume: ${{ secrets[format('ROLE_ARN_{0}', steps.detect.outputs.account)] }}
 
       - name: Setup Terraform
         uses: hashicorp/setup-terraform@v1
@@ -113,8 +111,8 @@ jobs:
 
       - name: Terraform Init
         run: terraform init
-        working-directory: ${{ steps.detect.outputs.work_dir }}
+        # working-directory: ${{ steps.detect.outputs.work_dir }}
 
       - name: Terraform Apply
         run: terraform apply -auto-approve
-        working-directory: ${{ steps.detect.outputs.work_dir }}
+        # working-directory: ${{ steps.detect.outputs.work_dir }}
