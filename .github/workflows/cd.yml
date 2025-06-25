@@ -1,14 +1,15 @@
-# PR에서 변경된 파일을 감지하여 terraform plan을 실행하는 워크플로우
-name: Terraform Plan
+name: Terraform Plan and Apply
 
 on:
   pull_request:
-    branches:
-      - main
+    branches: [main]
     paths:
-      - 'operation-team-account/**'
-      - 'identity-team-account/**'
-      - 'prod-team-account/**'
+      - "operation-team-account/**"
+      - "identity-team-account/**"
+      - "prod-team-account/**"
+  push:
+    branches:
+      - main # PR이 main에 merge되었을 때만 apply 실행
 
 permissions:
   contents: read
@@ -17,21 +18,33 @@ permissions:
 jobs:
   terraform-plan:
     runs-on: ubuntu-latest
+    outputs:
+      work_dir: ${{ steps.detect.outputs.work_dir }}
+      account: ${{ steps.detect.outputs.account }}
 
     steps:
       - name: Checkout
         uses: actions/checkout@v3
 
       - name: Fetch origin/main
-        run: git fetch origin main
+        run: git fetch origin main # origin/main을 fetch
 
-      - name: Detect Changed Files
+      - name: Detect Changed Files (only in PR event)
         id: detect
         run: |
-          echo "Running in pull_request event."
-          FILES=$(git diff --name-only origin/main..${{ github.sha }})
-          echo "Changed files in PR:"
-          echo "$FILES"
+          echo "Running in $GITHUB_EVENT_NAME event."
+
+          if [ "$GITHUB_EVENT_NAME" = "pull_request" ]; then
+            FILES=$(git diff --name-only origin/main..${{ github.sha }})
+            echo "Changed files in PR:"
+            echo "$FILES"
+          else
+            MERGE_BASE=$(git merge-base origin/main HEAD)
+            FILES=$(git diff --name-only $MERGE_BASE..HEAD)
+            echo "Changed files after merge:"
+            echo "$FILES"
+          fi
+
           if [ -z "$FILES" ]; then
             echo "No files changed. Skipping Terraform plan."
             exit 0
@@ -74,23 +87,10 @@ jobs:
         working-directory: ${{ steps.detect.outputs.work_dir }}
         continue-on-error: true
 
-
----
-# Push(머지 후)에서 terraform apply를 실행하는 워크플로우
-name: Terraform Apply
-
-on:
-  push:
-    branches:
-      - main  # PR이 main에 merge되었을 때만 apply 실행
-
-permissions:
-  contents: read
-  id-token: write
-
-jobs:
   terraform-apply:
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
     runs-on: ubuntu-latest
+    needs: terraform-plan
 
     steps:
       - name: Checkout
@@ -101,9 +101,9 @@ jobs:
 
       - name: Configure AWS Credentials
         uses: aws-actions/configure-aws-credentials@v4
-        # with:
-        #   aws-region: ap-northeast-2
-        #   role-to-assume: ${{ secrets[format('ROLE_ARN_{0}', steps.detect.outputs.account)] }}
+        with:
+          aws-region: ap-northeast-2
+          role-to-assume: ${{ secrets[format('ROLE_ARN_{0}', needs.terraform-plan.outputs.account)] }}
 
       - name: Setup Terraform
         uses: hashicorp/setup-terraform@v1
@@ -112,8 +112,8 @@ jobs:
 
       - name: Terraform Init
         run: terraform init
-        # working-directory: ${{ steps.detect.outputs.work_dir }}
+        working-directory: ${{ needs.terraform-plan.outputs.work_dir }}
 
       - name: Terraform Apply
         run: terraform apply -auto-approve
-        # working-directory: ${{ steps.detect.outputs.work_dir }}
+        working-directory: ${{ needs.terraform-plan.outputs.work_dir }}
