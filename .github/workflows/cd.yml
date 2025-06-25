@@ -49,6 +49,7 @@ jobs:
           else
             echo "No matching folder changed."
             exit 1
+          fi
 
       - name: Configure AWS Credentials
         uses: aws-actions/configure-aws-credentials@v4
