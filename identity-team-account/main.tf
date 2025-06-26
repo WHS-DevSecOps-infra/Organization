@@ -83,4 +83,3 @@ resource "aws_dynamodb_table" "lock_org" {
     Environment = "identity"
   }
 }
-
