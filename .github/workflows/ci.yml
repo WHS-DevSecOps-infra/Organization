@@ -31,7 +31,8 @@ jobs:
           echo "Detecting changed files for event: $GITHUB_EVENT_NAME"
 
           if [ "$GITHUB_EVENT_NAME" = "pull_request" ]; then
-            FILES=$(git diff --name-only origin/main...${{ github.sha }})
+            BASE_SHA="${{ github.event.pull_request.base.sha }}"
+            FILES=$(git diff --name-only $BASE_SHA ${{ github.sha }})
           else
             MERGE_BASE=$(git merge-base origin/main HEAD)
             FILES=$(git diff --name-only $MERGE_BASE HEAD)
