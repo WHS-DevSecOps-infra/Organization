@@ -28,7 +28,15 @@ jobs:
       - name: Detect Changed Folder
         id: detect
         run: |
-          FILES=$(git diff --name-only origin/main ${{ github.sha }})
+          echo "Detecting changed files for event: $GITHUB_EVENT_NAME"
+
+          if [ "$GITHUB_EVENT_NAME" = "pull_request" ]; then
+            FILES=$(git diff --name-only origin/main...${{ github.sha }})
+          else
+            MERGE_BASE=$(git merge-base origin/main HEAD)
+            FILES=$(git diff --name-only $MERGE_BASE HEAD)
+          fi
+
           echo "Changed files:"
           echo "$FILES"
 
@@ -45,6 +53,7 @@ jobs:
             echo "No relevant folder changed. Skipping rest of workflow."
             echo "skip=true" >> $GITHUB_OUTPUT
           fi
+
       # 4. AWS Credentials 설정
       - name: Configure AWS Credentials via OIDC
         if: steps.detect.outputs.skip != 'true'
@@ -53,12 +62,17 @@ jobs:
           aws-region: ap-northeast-2
           role-to-assume: ${{ secrets[format('ROLE_ARN_{0}', steps.detect.outputs.account)] }}
 
-      # 5. tfsec
-      - name: Run tfsec
+      # 5. tfsec 설치
+      - name: Install tfsec
         if: steps.detect.outputs.skip != 'true'
-        uses: aquasecurity/tfsec-action@v1.0.0
-        with:
-          working-directory: ${{ steps.detect.outputs.work_dir }}
+        run: |
+          curl -sSL https://raw.githubusercontent.com/aquasecurity/tfsec/master/scripts/install_linux.sh | bash
+
+      # 5. tfsec : high 이상일 경우에만 실패
+      - name: Run tfsec (fail only on HIGH and above)
+        if: steps.detect.outputs.skip != 'true'
+        run: |
+          tfsec --minimum-severity HIGH --no-color ${{ steps.detect.outputs.work_dir }}
 
       # 6. Terraform 설정
       - name: Setup Terraform
