@@ -153,10 +153,7 @@ jobs:
         if: steps.detect.outputs.skip != 'true'
         run: |
           ls -al ${{ steps.detect.outputs.work_dir }}
-          infracost breakdown \
-            --path=${{ steps.detect.outputs.work_dir }}/plan.json
-            --format=json \
-            --out-file=/tmp/infracost.json
+          infracost breakdown --path=${{ steps.detect.outputs.work_dir }}/plan.json --format=json --out-file=/tmp/infracost.json
         env:
           INFRACOST_API_KEY: ${{ secrets.INFRACOST_API_KEY }}
 
