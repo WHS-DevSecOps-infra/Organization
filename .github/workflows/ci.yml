@@ -153,7 +153,6 @@ jobs:
         if: steps.detect.outputs.skip != 'true'
         run: |
           ls -al ${{ steps.detect.outputs.work_dir }}
-          cat ${{ steps.detect.outputs.work_dir }}/plan.json
           infracost breakdown \
             --path=${{ steps.detect.outputs.work_dir }}/plan.json \
             --format=json \
