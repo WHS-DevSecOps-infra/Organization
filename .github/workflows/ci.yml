@@ -148,7 +148,7 @@ jobs:
         if: steps.detect.outputs.skip != 'true'
         uses: infracost/actions/setup@v2
 
-      # 18. 비용 분석 실행 및 JSON 결과 저장
+      # 18. Generate Infracost Breakdown
       - name: Generate Infracost Breakdown
         if: steps.detect.outputs.skip != 'true'
         run: |
@@ -159,17 +159,17 @@ jobs:
           infracost breakdown \
             --path=./plan.json \
             --format=json \
-            --out-file=./infracost-output.json
+            --out-file=/tmp/infracost.json
         working-directory: ${{ steps.detect.outputs.work_dir }}
         env:
           INFRACOST_API_KEY: ${{ secrets.INFRACOST_API_KEY }}
 
-      # 19. PR 코멘트로 비용 분석 결과 등록
+      # 19. Comment on Pull Request
       - name: Infracost Comment on Pull Request
         if: steps.detect.outputs.skip != 'true'
         uses: infracost/actions@v1
         with:
-          path: ${{ steps.detect.outputs.work_dir }}/infracost-output.json
+          path: /tmp/infracost.json
           behavior: update
         env:
           INFRACOST_API_KEY: ${{ secrets.INFRACOST_API_KEY }}
