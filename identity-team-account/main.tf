@@ -7,15 +7,15 @@ terraform {
 }
 
 provider "aws" {
-  region  = "ap-northeast-2"
+  region = "ap-northeast-2"
 }
 
 # S3 버킷 생성
 resource "aws_s3_bucket" "state_org" {
-  bucket = "cloudfence-identity-s3" 
+  bucket = "cloudfence-identity-s3"
 
   lifecycle {
-    prevent_destroy = true 
+    prevent_destroy = true
   }
 
   tags = {
@@ -63,7 +63,7 @@ resource "aws_s3_bucket_server_side_encryption_configuration" "encryption" {
 
   rule {
     apply_server_side_encryption_by_default {
-      sse_algorithm = "aws:kms"
+      sse_algorithm     = "aws:kms"
       kms_master_key_id = aws_kms_key.s3_key.arn
     }
   }
@@ -71,9 +71,9 @@ resource "aws_s3_bucket_server_side_encryption_configuration" "encryption" {
 
 # DynamoDB 테이블 생성 (상태 파일 잠금 관리)
 resource "aws_dynamodb_table" "lock_org" {
-  name           = "tfstate-identity-lock" 
-  billing_mode   = "PAY_PER_REQUEST"
-  hash_key       = "LockID"  # 고유한 LockID로 상태 잠금을 관리
+  name         = "tfstate-identity-lock"
+  billing_mode = "PAY_PER_REQUEST"
+  hash_key     = "LockID" # 고유한 LockID로 상태 잠금을 관리
 
   attribute {
     name = "LockID"
@@ -82,7 +82,7 @@ resource "aws_dynamodb_table" "lock_org" {
 
   # 서버 측 암호화 설정
   server_side_encryption {
-    enabled = true  # 서버 측 암호화 활성화
+    enabled = true # 서버 측 암호화 활성화
   }
 
   tags = {
