@@ -154,7 +154,8 @@ jobs:
         run: |
           ls -al ${{ steps.detect.outputs.work_dir }}
           infracost breakdown \
-            --path=${{ steps.detect.outputs.work_dir }}/tfplan.binary \
+            --path=${{ steps.detect.outputs.work_dir }}/plan.json
+
             --format=json \
             --out-file=/tmp/infracost.json
         env:
