@@ -149,14 +149,17 @@ jobs:
         uses: infracost/actions/setup@v2
 
       # 18. 비용 분석 실행 및 JSON 결과 저장
+      # 비용 분석 실행
       - name: Generate Infracost Breakdown
         if: steps.detect.outputs.skip != 'true'
         run: |
-          ls -al ${{ steps.detect.outputs.work_dir }}
+          ls -al
+          cat plan.json
           infracost breakdown \
-            --path=${{ steps.detect.outputs.work_dir }}/plan.json \
+            --path=plan.json \
             --format=json \
             --out-file=/tmp/infracost.json
+        working-directory: ${{ steps.detect.outputs.work_dir }}
         env:
           INFRACOST_API_KEY: ${{ secrets.INFRACOST_API_KEY }}
 
