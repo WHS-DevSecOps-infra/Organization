@@ -15,7 +15,7 @@ resource "aws_s3_bucket" "state_org" {
   bucket = "cloudfence-identity-s3" 
 
   lifecycle {
-    prevent_destroy = true  # 이 버킷이 삭제되지 않도록 설정
+    prevent_destroy = true 
   }
 
   tags = {
@@ -51,13 +51,20 @@ resource "aws_s3_bucket_public_access_block" "state_org_block" {
   restrict_public_buckets = true
 }
 
+# S3 암호화를 위한 고객 관리형 KMS 키
+resource "aws_kms_key" "s3_key" {
+  description         = "KMS key for S3 encryption"
+  enable_key_rotation = true
+}
+
 # S3 버킷 서버 측 암호화 설정
 resource "aws_s3_bucket_server_side_encryption_configuration" "encryption" {
   bucket = aws_s3_bucket.state_org.id
 
   rule {
     apply_server_side_encryption_by_default {
-      sse_algorithm = "AES256"  # 서버 측 암호화
+      sse_algorithm = "aws:kms"
+      kms_master_key_id = aws_kms_key.s3_key.arn
     }
   }
 }
