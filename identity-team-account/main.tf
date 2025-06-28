@@ -69,7 +69,7 @@ resource "aws_s3_bucket_server_side_encryption_configuration" "encryption" {
   }
 }
 
-# DynamoDB 테이블 생성(상태 파일 잠금 관리)
+# DynamoDB 테이블 생성 (상태 파일 잠금 관리)
 resource "aws_dynamodb_table" "lock_org" {
   name         = "tfstate-identity-lock"
   billing_mode = "PAY_PER_REQUEST"
