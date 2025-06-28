@@ -169,7 +169,7 @@ jobs:
         if: steps.detect.outputs.skip != 'true'
         uses: infracost/actions@v1
         with:
-          path: /tmp/infracost.json
+          path: ${{ steps.detect.outputs.work_dir }}/plan.json
           behavior: update
         env:
           INFRACOST_API_KEY: ${{ secrets.INFRACOST_API_KEY }}
