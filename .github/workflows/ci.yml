@@ -12,6 +12,7 @@ on:
 # 최소 권한 원칙 적용
 permissions:
   contents: read
+  pull-requests: write
   id-token: write
 
 jobs:
