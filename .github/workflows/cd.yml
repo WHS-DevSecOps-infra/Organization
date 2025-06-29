@@ -84,11 +84,6 @@ jobs:
         run: terraform import aws_dynamodb_table.lock_org cloudfence-identity-lock
         working-directory: ${{ needs.detect-changes.outputs.changed_dir }}
 
-      - name: Terraform Plan
-        run: terraform plan -no-color
-        working-directory: ${{ needs.detect-changes.outputs.changed_dir }}
-        continue-on-error: true
-
       - name: Terraform Apply
         run: terraform apply -auto-approve
         working-directory: ${{ needs.detect-changes.outputs.changed_dir }}
