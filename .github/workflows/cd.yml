@@ -86,14 +86,7 @@ jobs:
     strategy:
       matrix:
         dir: ${{ fromJson(needs.detect-changes.outputs.changed_dirs) }}
-        include:
-          - dir: operation-team-account
-          - dir: identity-team-account
-          - dir: prod-team-account
-          - dir: dev-team-account
-          - dir: security-team-account
-          - dir: stage-team-account
-          - dir: management-team-account
+      fail-fast: false
 
     steps:
       - name: Checkout repository
