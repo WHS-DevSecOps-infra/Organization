@@ -107,15 +107,25 @@ jobs:
         run: terraform validate
         working-directory: ${{ env.TF_DIR }}
 
-      - name: Terraform Plan (text)
-        run: terraform plan -no-color > plan.txt
+      - name: Terraform Plan
+        id: plan
+        run: |
+          terraform plan -no-color > plan.txt
+          echo 'PLAN<<EOF' >> $GITHUB_OUTPUT
+          cat plan.txt >> $GITHUB_OUTPUT
+          echo 'EOF' >> $GITHUB_OUTPUT
         working-directory: ${{ env.TF_DIR }}
 
-      - name: Upload Plan Artifact
-        uses: actions/upload-artifact@v4
+      - name: Comment Terraform Plan on PR
+        if: github.event.pull_request.number != ''
+        uses: peter-evans/create-or-update-comment@v4
         with:
-          name: terraform-plan-${{ matrix.dir }}
-          path: ${{ env.TF_DIR }}/plan.txt
+          issue-number: ${{ github.event.pull_request.number }}
+          body: |
+            ### 🛠 Terraform Plan Output for `${{ matrix.dir }}`
+            ```hcl
+            ${{ steps.plan.outputs.PLAN }}
+            ```
 
       - name: Terraform Plan (for Infracost)
         run: terraform plan -refresh=false -out=tfplan.binary
