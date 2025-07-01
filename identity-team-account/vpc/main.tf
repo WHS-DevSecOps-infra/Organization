@@ -1,3 +1,2 @@
-provider "aws" {
-  region = "ap-northeast-2"
-}
+# 현재 리소스 없음
+# 나중에 aws_instance 같은 리소스를 여기에 추가할 예정

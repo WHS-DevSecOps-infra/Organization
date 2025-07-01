@@ -1,6 +1,6 @@
 # S3 버킷 생성
 resource "aws_s3_bucket" "state_org" {
-  bucket = "cloudfence-identity-bucket"
+  bucket = "cloudfence-stage-bucket"
 
   lifecycle {
     prevent_destroy = true
@@ -8,7 +8,7 @@ resource "aws_s3_bucket" "state_org" {
 
   tags = {
     Name        = "Terraform State Bucket"
-    Environment = "identity"
+    Environment = "stage"
   }
 }
 
@@ -59,7 +59,7 @@ resource "aws_s3_bucket_server_side_encryption_configuration" "encryption" {
 
 # DynamoDB 테이블 생성 (상태 파일 잠금 관리)
 resource "aws_dynamodb_table" "lock_org" {
-  name         = "cloudfence-identity-lock"
+  name         = "cloudfence-stage-lock"
   billing_mode = "PAY_PER_REQUEST"
   hash_key     = "LockID" # 고유한 LockID로 상태 잠금 관리
 
@@ -75,6 +75,6 @@ resource "aws_dynamodb_table" "lock_org" {
 
   tags = {
     Name        = "Terraform Lock Table"
-    Environment = "identity"
+    Environment = "stage"
   }
 }
