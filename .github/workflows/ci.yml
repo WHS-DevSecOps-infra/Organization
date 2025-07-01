@@ -11,6 +11,7 @@ on:
       - "dev-team-account/**"
       - "security-team-account/**"
       - "stage-team-account/**"
+      - "management-team-account/**"
 
 # 최소 권한 원칙 적용
 permissions:
@@ -74,6 +75,12 @@ jobs:
             DIRS+=("stage-team-account")
             ACCOUNT="STAGE"
           fi
+
+          if echo "$FILES" | grep -q '^management-team-account/'; then
+            DIRS+=("management-team-account")
+            ACCOUNT="MANAGEMENT"
+          fi
+
 
           if [ ${#DIRS[@]} -eq 0 ]; then
             echo "No matching folder changed."

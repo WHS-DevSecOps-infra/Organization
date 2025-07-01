@@ -38,6 +38,8 @@ jobs:
               - 'security-team-account/**'
             stage:
               - 'stage-team-account/**'
+            management:
+              - 'management-team-account/**'
 
       - name: Set changed dirs output
         id: set-dir
@@ -68,6 +70,11 @@ jobs:
           if [[ "${{ steps.changes.outputs.stage }}" == "true" ]]; then
             CHANGED_DIRS="$CHANGED_DIRS stage-team-account"
             SECRET_KEYS="$SECRET_KEYS ROLE_ARN_STAGE"
+          fi
+
+          if [[ "${{ steps.changes.outputs.stage }}" == "true" ]]; then
+            CHANGED_DIRS="$CHANGED_DIRS management-team-account"
+            SECRET_KEYS="$SECRET_KEYS ROLE_ARN_MANAGEMENT"
           fi
 
           echo "changed_dirs=$CHANGED_DIRS" >> $GITHUB_OUTPUT
