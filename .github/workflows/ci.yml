@@ -8,6 +8,9 @@ on:
       - "operation-team-account/**"
       - "identity-team-account/**"
       - "prod-team-account/**"
+      - "dev-team-account/**"
+      - "security-team-account/**"
+      - "stage-team-account/**"
 
 # 최소 권한 원칙 적용
 permissions:
@@ -42,23 +45,50 @@ jobs:
             exit 0
           fi
 
+          # 디렉토리별로 변경된 파일 체크
+          DIRS=()
+          ACCOUNT=""
+
+          # 각 팀 디렉토리 검사
           if echo "$FILES" | grep -q '^operation-team-account/'; then
-            DIR="operation-team-account"
+            DIRS+=("operation-team-account")
             ACCOUNT="OPERATION"
-          elif echo "$FILES" | grep -q '^identity-team-account/'; then
-            DIR="identity-team-account"
+          fi
+          if echo "$FILES" | grep -q '^identity-team-account/'; then
+            DIRS+=("identity-team-account")
             ACCOUNT="IDENTITY"
-          elif echo "$FILES" | grep -q '^prod-team-account/'; then
-            DIR="prod-team-account"
+          fi
+          if echo "$FILES" | grep -q '^prod-team-account/'; then
+            DIRS+=("prod-team-account")
             ACCOUNT="PROD"
-          else
+          fi
+          if echo "$FILES" | grep -q '^dev-team-account/'; then
+            DIRS+=("dev-team-account")
+            ACCOUNT="DEV"
+          fi
+          if echo "$FILES" | grep -q '^security-team-account/'; then
+            DIRS+=("security-team-account")
+            ACCOUNT="SECURITY"
+          fi
+          if echo "$FILES" | grep -q '^stage-team-account/'; then
+            DIRS+=("stage-team-account")
+            ACCOUNT="STAGE"
+          fi
+
+          if [ ${#DIRS[@]} -eq 0 ]; then
             echo "No matching folder changed."
             exit 1
           fi
 
-          echo "$DIR" > changed_dir.txt
-          echo "work_dir=$DIR" >> $GITHUB_OUTPUT
-          echo "account=$ACCOUNT" >> $GITHUB_OUTPUT
+          echo "Changed directories: ${DIRS[@]}"
+          echo "account=$ACCOUNT" >> $GITHUB_ENV
+
+          # 각 변경된 디렉토리 기록
+          for DIR in "${DIRS[@]}"; do
+            echo "$DIR" >> changed_dir.txt
+          done
+
+          echo "work_dirs=${DIRS[@]}" >> $GITHUB_OUTPUT
 
       # 4. 감지된 디렉토리 정보를 파일로 저장
       - name: Save Changed Dir
