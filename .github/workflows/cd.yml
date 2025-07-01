@@ -71,8 +71,7 @@ jobs:
             CHANGED_DIRS="$CHANGED_DIRS stage-team-account"
             SECRET_KEYS="$SECRET_KEYS ROLE_ARN_STAGE"
           fi
-
-          if [[ "${{ steps.changes.outputs.stage }}" == "true" ]]; then
+          if [[ "${{ steps.changes.outputs.management }}" == "true" ]]; then
             CHANGED_DIRS="$CHANGED_DIRS management-team-account"
             SECRET_KEYS="$SECRET_KEYS ROLE_ARN_MANAGEMENT"
           fi
@@ -84,6 +83,17 @@ jobs:
     runs-on: ubuntu-latest
     needs: detect-changes
     if: needs.detect-changes.outputs.changed_dirs != ''
+    strategy:
+      matrix:
+        dir: ${{ fromJson(needs.detect-changes.outputs.changed_dirs) }}
+        include:
+          - dir: operation-team-account
+          - dir: identity-team-account
+          - dir: prod-team-account
+          - dir: dev-team-account
+          - dir: security-team-account
+          - dir: stage-team-account
+          - dir: management-team-account
 
     steps:
       - name: Checkout repository
@@ -102,12 +112,9 @@ jobs:
         with:
           terraform_version: 1.4.0
 
-      # 반복적으로 각 변경된 디렉토리에 대해 Terraform 작업 수행
       - name: Terraform Init and Apply for Changed Directories
         run: |
-          for DIR in ${{ needs.detect-changes.outputs.changed_dirs }}; do
-            echo "Running Terraform for directory: $DIR"
-            terraform init
-            terraform apply -auto-approve
-          done
-        working-directory: ${{ needs.detect-changes.outputs.changed_dirs }}
+          echo "Running Terraform for directory: ${{ matrix.dir }}"
+          terraform init
+          terraform apply -auto-approve
+        working-directory: ${{ matrix.dir }}
