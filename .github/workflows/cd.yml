@@ -12,17 +12,13 @@ jobs:
   detect-changes:
     runs-on: ubuntu-latest
     outputs:
-      changed_dirs: ${{ steps.set-dir.outputs.changed_dirs }}
-      secret_keys: ${{ steps.set-dir.outputs.secret_keys }}
-
+      matrix: ${{ steps.set.outputs.matrix }}
     steps:
       - name: Checkout repository
         uses: actions/checkout@v3
-        with:
-          fetch-depth: 0
 
-      - name: Detect changed directories
-        id: changes
+      - name: Filter Paths
+        id: filter
         uses: dorny/paths-filter@v3
         with:
           filters: |
@@ -41,73 +37,63 @@ jobs:
             management:
               - 'management-team-account/**'
 
-      - name: Set changed dirs output
-        id: set-dir
+      - name: Build Matrix from Filter
+        id: set
         run: |
-          CHANGED_DIRS=""
-          SECRET_KEYS=""
+          declare -A ROLE_MAP=(
+            ["operation"]="ROLE_ARN_OPERATION"
+            ["identity"]="ROLE_ARN_IDENTITY"
+            ["prod"]="ROLE_ARN_PROD"
+            ["dev"]="ROLE_ARN_DEV"
+            ["security"]="ROLE_ARN_SECURITY"
+            ["stage"]="ROLE_ARN_STAGE"
+            ["management"]="ROLE_ARN_MANAGEMENT"
+          )
 
-          if [[ "${{ steps.changes.outputs.operation }}" == "true" ]]; then
-            CHANGED_DIRS="operation-team-account"
-            SECRET_KEYS="ROLE_ARN_OPERATION"
-          fi
-          if [[ "${{ steps.changes.outputs.identity }}" == "true" ]]; then
-            CHANGED_DIRS="$CHANGED_DIRS identity-team-account"
-            SECRET_KEYS="$SECRET_KEYS ROLE_ARN_IDENTITY"
-          fi
-          if [[ "${{ steps.changes.outputs.prod }}" == "true" ]]; then
-            CHANGED_DIRS="$CHANGED_DIRS prod-team-account"
-            SECRET_KEYS="$SECRET_KEYS ROLE_ARN_PROD"
-          fi
-          if [[ "${{ steps.changes.outputs.dev }}" == "true" ]]; then
-            CHANGED_DIRS="$CHANGED_DIRS dev-team-account"
-            SECRET_KEYS="$SECRET_KEYS ROLE_ARN_DEV"
-          fi
-          if [[ "${{ steps.changes.outputs.security }}" == "true" ]]; then
-            CHANGED_DIRS="$CHANGED_DIRS security-team-account"
-            SECRET_KEYS="$SECRET_KEYS ROLE_ARN_SECURITY"
-          fi
-          if [[ "${{ steps.changes.outputs.stage }}" == "true" ]]; then
-            CHANGED_DIRS="$CHANGED_DIRS stage-team-account"
-            SECRET_KEYS="$SECRET_KEYS ROLE_ARN_STAGE"
-          fi
-          if [[ "${{ steps.changes.outputs.management }}" == "true" ]]; then
-            CHANGED_DIRS="$CHANGED_DIRS management-team-account"
-            SECRET_KEYS="$SECRET_KEYS ROLE_ARN_MANAGEMENT"
-          fi
+          MATRIX_ITEMS=()
 
-          echo "changed_dirs=$CHANGED_DIRS" >> $GITHUB_OUTPUT
-          echo "secret_keys=$SECRET_KEYS" >> $GITHUB_OUTPUT
+          for KEY in "${!ROLE_MAP[@]}"; do
+            if [[ "${{ steps.filter.outputs[$KEY] }}" == "true" ]]; then
+              MATRIX_ITEMS+=("{\"dir\":\"${KEY}-team-account\",\"role_key\":\"${ROLE_MAP[$KEY]}\"}")
+            fi
+          done
+
+          if [ ${#MATRIX_ITEMS[@]} -eq 0 ]; then
+            echo "matrix=[]" >> $GITHUB_OUTPUT
+          else
+            JSON="[$(IFS=,; echo "${MATRIX_ITEMS[*]}")]"
+            echo "matrix=$JSON" >> $GITHUB_OUTPUT
+          fi
 
   terraform-apply:
-    runs-on: ubuntu-latest
     needs: detect-changes
-    if: needs.detect-changes.outputs.changed_dirs != ''
+    if: ${{ needs.detect-changes.outputs.matrix != '[]' }}
+    runs-on: ubuntu-latest
+
     strategy:
       matrix:
-        dir: ${{ fromJson(needs.detect-changes.outputs.changed_dirs) }}
+        include: ${{ fromJson(needs.detect-changes.outputs.matrix) }}
       fail-fast: false
 
     steps:
       - name: Checkout repository
         uses: actions/checkout@v3
-        with:
-          fetch-depth: 0
 
-      - name: Configure AWS credentials
+      - name: Configure AWS Credentials
         uses: aws-actions/configure-aws-credentials@v4
         with:
           aws-region: ap-northeast-2
-          role-to-assume: ${{ secrets[needs.detect-changes.outputs.secret_keys] }}
+          role-to-assume: ${{ secrets[matrix.role_key] }}
 
       - name: Setup Terraform
         uses: hashicorp/setup-terraform@v1
         with:
           terraform_version: 1.4.0
 
-      - name: Terraform Init and Apply for Changed Directories
-        run: |
-          echo "Running Terraform for directory: ${{ matrix.dir }}"
-          terraform init
-          terraform apply -auto-approve
+      - name: Terraform Init
+        run: terraform init
+        working-directory: ${{ matrix.dir }}
+
+      - name: Terraform Apply
+        run: terraform apply -auto-approve
         working-directory: ${{ matrix.dir }}
