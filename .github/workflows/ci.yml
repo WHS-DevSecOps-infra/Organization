@@ -122,7 +122,7 @@ jobs:
         with:
           issue-number: ${{ github.event.pull_request.number }}
           body: |
-            ### 🛠 Terraform Plan Output for `${{ matrix.dir }}`
+            ### Terraform Plan Output for `${{ matrix.dir }}`
             ```hcl
             ${{ steps.plan.outputs.PLAN }}
             ```
