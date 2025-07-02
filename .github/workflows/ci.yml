@@ -142,7 +142,7 @@ jobs:
       - name: Infracost Breakdown
         run: |
           infracost breakdown \
-            --path=./plan.json \
+            --path=plan.json \
             --format=json \
             --out-file=/tmp/infracost.json
         working-directory: ${{ env.TF_DIR }}
@@ -154,6 +154,3 @@ jobs:
         with:
           path: ${{ env.TF_DIR }}/plan.json
           behavior: update
-        env:
-          INFRACOST_API_KEY: ${{ secrets.INFRACOST_API_KEY }}
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
