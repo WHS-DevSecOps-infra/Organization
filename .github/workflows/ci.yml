@@ -49,6 +49,7 @@ jobs:
             echo "No relevant changes detected."
             echo "changed_dirs=[]" >> $GITHUB_OUTPUT
           else
+            IFS=,  # 쉼표로 문자열 구분하는 배열
             JSON="[${DIRS[*]}]"
             echo "Detected changed dirs: $JSON"
             echo "changed_dirs=$JSON" >> $GITHUB_OUTPUT
