@@ -75,6 +75,10 @@ locals {
   resources = [
     "cloudwatch",
     "firehose",
+<<<<<<< HEAD
+=======
+    "iam",
+>>>>>>> 27f8fb7 (identity 폴더 구조 리팩터링)
     "opensearch",
     "securitylake"
   ]
