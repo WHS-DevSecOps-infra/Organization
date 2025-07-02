@@ -24,7 +24,7 @@ resource "aws_s3_bucket" "state_org" {
   }
 }
 
-# S3 버킷 버전 관리 설정
+# 버킷 버전 관리
 resource "aws_s3_bucket_versioning" "state_org_versioning" {
   bucket = aws_s3_bucket.state_org.id
 
@@ -33,7 +33,7 @@ resource "aws_s3_bucket_versioning" "state_org_versioning" {
   }
 }
 
-# S3 버킷 소유권 제어 설정
+# 버킷 소유권 제어
 resource "aws_s3_bucket_ownership_controls" "ownership" {
   bucket = aws_s3_bucket.state_org.id
 
@@ -42,7 +42,7 @@ resource "aws_s3_bucket_ownership_controls" "ownership" {
   }
 }
 
-# S3 버킷의 공용 접근 차단 설정
+# 퍼블릭 접근 차단
 resource "aws_s3_bucket_public_access_block" "state_org_block" {
   bucket                  = aws_s3_bucket.state_org.id
   block_public_acls       = true
@@ -51,13 +51,13 @@ resource "aws_s3_bucket_public_access_block" "state_org_block" {
   restrict_public_buckets = true
 }
 
-# S3 암호화를 위한 고객 관리형 KMS 키
+# S3 암호화를 위한 KMS 키
 resource "aws_kms_key" "s3_key" {
   description         = "KMS key for S3 encryption"
   enable_key_rotation = true
 }
 
-# S3 버킷 서버 측 암호화 설정
+# S3 버킷 서버 측 암호화
 resource "aws_s3_bucket_server_side_encryption_configuration" "encryption" {
   bucket = aws_s3_bucket.state_org.id
 
@@ -69,11 +69,23 @@ resource "aws_s3_bucket_server_side_encryption_configuration" "encryption" {
   }
 }
 
-# DynamoDB 테이블 생성 (상태 파일 잠금 관리)
-resource "aws_dynamodb_table" "lock_org" {
-  name         = "cloudfence-identity-lock"
+# 리소스 단위 Lock Table
+
+locals {
+  resources = [
+    "cloudwatch",
+    "firehose",
+    "iam",
+    "opensearch",
+    "securitylake"
+  ]
+}
+
+resource "aws_dynamodb_table" "resource_locks" {
+  for_each     = toset(local.resources)
+  name         = "${each.key}-identity-lock"
   billing_mode = "PAY_PER_REQUEST"
-  hash_key     = "LockID" # 고유한 LockID로 상태 잠금 관리
+  hash_key     = "LockID" 
 
   attribute {
     name = "LockID"
@@ -86,7 +98,7 @@ resource "aws_dynamodb_table" "lock_org" {
   }
 
   tags = {
-    Name        = "Terraform Lock Table"
+    Name        = "${each.key} Lock Table"
     Environment = "identity"
   }
 }
