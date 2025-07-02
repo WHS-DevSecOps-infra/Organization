@@ -53,7 +53,10 @@ jobs:
           MATRIX_ITEMS=()
 
           for KEY in "${!ROLE_MAP[@]}"; do
-            if [[ "${{ steps.filter.outputs[$KEY] }}" == "true" ]]; then
+            VAR_NAME="FILTER_OUTPUTS_${KEY}"
+            VALUE="${!VAR_NAME}"
+
+            if [ "$VALUE" == "true" ]; then
               MATRIX_ITEMS+=("{\"dir\":\"${KEY}-team-account\",\"role_key\":\"${ROLE_MAP[$KEY]}\"}")
             fi
           done
@@ -64,6 +67,14 @@ jobs:
             JSON="[$(IFS=,; echo "${MATRIX_ITEMS[*]}")]"
             echo "matrix=$JSON" >> $GITHUB_OUTPUT
           fi
+        env:
+          FILTER_OUTPUTS_operation: ${{ steps.filter.outputs.operation }}
+          FILTER_OUTPUTS_identity: ${{ steps.filter.outputs.identity }}
+          FILTER_OUTPUTS_prod: ${{ steps.filter.outputs.prod }}
+          FILTER_OUTPUTS_dev: ${{ steps.filter.outputs.dev }}
+          FILTER_OUTPUTS_security: ${{ steps.filter.outputs.security }}
+          FILTER_OUTPUTS_stage: ${{ steps.filter.outputs.stage }}
+          FILTER_OUTPUTS_management: ${{ steps.filter.outputs.management }}
 
   terraform-apply:
     needs: detect-changes
