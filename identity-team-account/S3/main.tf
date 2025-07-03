@@ -76,9 +76,12 @@ locals {
     "cloudwatch",
     "firehose",
 <<<<<<< HEAD
+<<<<<<< HEAD
 =======
     "iam",
 >>>>>>> 27f8fb7 (identity 폴더 구조 리팩터링)
+=======
+>>>>>>> 6ee751c (S3 main.tf 수정)
     "opensearch",
     "securitylake"
   ]
