@@ -75,7 +75,6 @@ locals {
   resources = [
     "cloudwatch",
     "firehose",
-    "iam",
     "opensearch",
     "securitylake"
   ]
