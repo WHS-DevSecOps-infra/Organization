@@ -3,7 +3,6 @@ name: Organization CI
 on:
   pull_request:
     branches: [main]
-    # 특정 디렉토리의 파일이 변경되었을 때에만 워크플로우 실행
     paths:
       - "operation-team-account/**"
       - "identity-team-account/**"
@@ -24,24 +23,20 @@ jobs:
     outputs:
       matrix: ${{ steps.set.outputs.matrix }}
     steps:
-      # git repository code 가져오기
       - name: Checkout Code
         uses: actions/checkout@v3
         with:
           fetch-depth: 0
 
-      # 최신 origin/main 브랜치 가져오기
       - name: Fetch origin/main
         run: git fetch origin main
 
-      # 변경된 디렉토리를 감지하고 matrix 형태로 저장
       - name: Detect Changed Directories & Build Matrix
         id: set
         run: |
           FILES=$(git diff --name-only origin/main...${{ github.sha }})
           echo "Changed files:"
           echo "$FILES"
-          # 각 디렉토리에 대응하는 assume role key 정의
           declare -A ROLE_MAP=(
             ["operation-team-account"]="ROLE_ARN_OPERATION"
             ["identity-team-account"]="ROLE_ARN_IDENTITY"
