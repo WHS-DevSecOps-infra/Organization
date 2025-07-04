@@ -139,7 +139,7 @@ jobs:
           echo 'EOF' >> $GITHUB_OUTPUT
         working-directory: ${{ matrix.dir }}
 
-      # Terraform plan 결과를 PR 댓글로 출력
+      # Terraform plan 결과를 PR의 댓글로 출력
       - name: Comment Terraform Plan on PR
         if: github.event.pull_request.number != ''
         uses: peter-evans/create-or-update-comment@v4
