@@ -37,8 +37,16 @@ jobs:
             management:
               - 'management-team-account/**'
 
-      - name: Build Matrix from Filter
+      - name: Build Matrix from Filter (with subdirs)
         id: set
+        env:
+          FILTER_OUTPUTS_operation: ${{ steps.filter.outputs.operation }}
+          FILTER_OUTPUTS_identity: ${{ steps.filter.outputs.identity }}
+          FILTER_OUTPUTS_prod: ${{ steps.filter.outputs.prod }}
+          FILTER_OUTPUTS_dev: ${{ steps.filter.outputs.dev }}
+          FILTER_OUTPUTS_security: ${{ steps.filter.outputs.security }}
+          FILTER_OUTPUTS_stage: ${{ steps.filter.outputs.stage }}
+          FILTER_OUTPUTS_management: ${{ steps.filter.outputs.management }}
         run: |
           declare -A ROLE_MAP=(
             ["operation"]="ROLE_ARN_OPERATION"
@@ -53,8 +61,17 @@ jobs:
           MATRIX_ITEMS=()
 
           for KEY in "${!ROLE_MAP[@]}"; do
-            if [[ "${{ steps.filter.outputs[$KEY] }}" == "true" ]]; then
-              MATRIX_ITEMS+=("{\"dir\":\"${KEY}-team-account\",\"role_key\":\"${ROLE_MAP[$KEY]}\"}")
+            VAR_NAME="FILTER_OUTPUTS_${KEY}"
+            VALUE="${!VAR_NAME}"
+
+            if [ "$VALUE" = "true" ]; then
+              BASE_DIR="${KEY}-team-account"
+
+              for DIR in $(find $BASE_DIR -type d -mindepth 1); do
+                if [[ "$DIR" != *".terraform"* ]]; then
+                  MATRIX_ITEMS+=("{\"dir\":\"$DIR\",\"role_key\":\"${ROLE_MAP[$KEY]}\"}")
+                fi
+              done
             fi
           done
 
