@@ -1,0 +1,176 @@
+name: Organization CI
+
+on:
+  pull_request:
+    branches: [main]
+    paths:
+      - "operation-team-account/**"
+      - "identity-team-account/**"
+      - "prod-team-account/**"
+      - "dev-team-account/**"
+      - "security-team-account/**"
+      - "stage-team-account/**"
+      - "management-team-account/**"
+
+permissions:
+  contents: read
+  pull-requests: write
+  id-token: write
+
+jobs:
+  detect-changes:
+    runs-on: ubuntu-latest
+    outputs:
+      matrix: ${{ steps.set.outputs.matrix }}
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v3
+        with:
+          fetch-depth: 0
+
+      - name: Fetch origin/main
+        run: git fetch origin main
+
+      - name: Detect Changed Directories & Build Matrix
+        id: set
+        run: |
+          FILES=$(git diff --name-only origin/main...${{ github.sha }})
+          echo "Changed files:"
+          echo "$FILES"
+
+          declare -A ROLE_MAP=(
+            ["operation-team-account"]="ROLE_ARN_OPERATION"
+            ["identity-team-account"]="ROLE_ARN_IDENTITY"
+            ["prod-team-account"]="ROLE_ARN_PROD"
+            ["dev-team-account"]="ROLE_ARN_DEV"
+            ["security-team-account"]="ROLE_ARN_SECURITY"
+            ["stage-team-account"]="ROLE_ARN_STAGE"
+            ["management-team-account"]="ROLE_ARN_MANAGEMENT"
+          )
+
+          TMP_FILE=$(mktemp)
+
+          for FILE in $FILES; do
+            # ex) identity-team-account/S3/main.tf
+            DIR=$(dirname "$FILE")
+            TOP_DIR=$(echo $DIR | cut -d/ -f1)
+            ROLE_KEY="${ROLE_MAP[$TOP_DIR]}"
+
+            if [ -n "$ROLE_KEY" ]; then
+              echo "$DIR|$ROLE_KEY" >> $TMP_FILE
+            fi
+          done
+
+          # 중복 제거
+          UNIQUE_LINES=$(sort $TMP_FILE | uniq)
+
+          MATRIX_JSON="["
+          FIRST=1
+
+          while IFS= read -r LINE; do
+            DIR=$(echo $LINE | cut -d"|" -f1)
+            ROLE_KEY=$(echo $LINE | cut -d"|" -f2)
+
+            if [ $FIRST -eq 1 ]; then
+              FIRST=0
+            else
+              MATRIX_JSON="$MATRIX_JSON,"
+            fi
+
+            MATRIX_JSON="$MATRIX_JSON{\"dir\":\"$DIR\",\"role_key\":\"$ROLE_KEY\"}"
+          done <<< "$UNIQUE_LINES"
+
+          MATRIX_JSON="$MATRIX_JSON]"
+
+          echo "Final JSON matrix:"
+          echo "$MATRIX_JSON"
+
+          echo "matrix=$MATRIX_JSON" >> $GITHUB_OUTPUT
+
+  terraform-ci:
+    needs: detect-changes
+    if: ${{ needs.detect-changes.outputs.matrix != '[]' }}
+    runs-on: ubuntu-latest
+
+    strategy:
+      matrix:
+        include: ${{ fromJson(needs.detect-changes.outputs.matrix) }}
+      fail-fast: false
+
+    env:
+      INFRACOST_API_KEY: ${{ secrets.INFRACOST_API_KEY }}
+      GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      INFRACOST_TERRAFORM_CLI_WRAPPER: false
+
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v3
+
+      - name: Configure AWS Credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          aws-region: ap-northeast-2
+          role-to-assume: ${{ secrets[matrix.role_key] }}
+
+      - name: Install tfsec
+        run: |
+          curl -sSL https://raw.githubusercontent.com/aquasecurity/tfsec/master/scripts/install_linux.sh | bash
+
+      - name: Run tfsec (fail on HIGH+)
+        run: tfsec --minimum-severity HIGH --no-color ${{ matrix.dir }}
+
+      - name: Setup Terraform
+        uses: hashicorp/setup-terraform@v1
+        with:
+          terraform_version: 1.4.0
+
+      - name: Terraform Init
+        run: terraform init
+        working-directory: ${{ matrix.dir }}
+
+      - name: Terraform Format Check
+        run: terraform fmt -check -recursive
+        working-directory: ${{ matrix.dir }}
+
+      - name: Terraform Validate
+        run: terraform validate
+        working-directory: ${{ matrix.dir }}
+
+      - name: Terraform Plan
+        id: plan
+        run: |
+          terraform plan -no-color -out=tfplan.binary
+          terraform show -no-color tfplan.binary > plan.txt
+          terraform show -json tfplan.binary > plan.json
+          echo 'PLAN<<EOF' >> $GITHUB_OUTPUT
+          cat plan.txt >> $GITHUB_OUTPUT
+          echo 'EOF' >> $GITHUB_OUTPUT
+        working-directory: ${{ matrix.dir }}
+
+      - name: Comment Terraform Plan on PR
+        if: github.event.pull_request.number != ''
+        uses: peter-evans/create-or-update-comment@v4
+        with:
+          issue-number: ${{ github.event.pull_request.number }}
+          body: |
+            ### Terraform Plan Output for `${{ matrix.dir }}`
+            ```hcl
+            ${{ steps.plan.outputs.PLAN }}
+            ```
+
+      - name: Setup Infracost
+        uses: infracost/actions/setup@v2
+
+      - name: Infracost Breakdown
+        run: |
+          infracost breakdown \
+            --path=plan.json \
+            --format=json \
+            --out-file=infracost.json
+        working-directory: ${{ matrix.dir }}
+
+      - name: Infracost Comment on Pull Request
+        uses: infracost/actions/comment@v1
+        with:
+          path: ${{ matrix.dir }}/infracost.json
+          behavior: update
