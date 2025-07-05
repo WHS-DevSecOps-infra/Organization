@@ -1,4 +1,3 @@
-/*
 terraform {
   backend "s3" {
     bucket         = "cloudfence-identity-state"
@@ -8,4 +7,3 @@ terraform {
     dynamodb_table = "s3-identity-lock"
   }
 }
-*/
