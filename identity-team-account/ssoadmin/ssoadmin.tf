@@ -9,7 +9,7 @@ terraform {
 
 # Configure the AWS Provider
 provider "aws" {
-  region  = "ap-northeast-2"
+  region = "ap-northeast-2"
 }
 
 # 현재 활성화된 IAM Identity Center 인스턴스에 연결된 디렉터리 정보를 불러오기
