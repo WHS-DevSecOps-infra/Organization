@@ -16,7 +16,9 @@ locals {
   resources = [
     "organizations",
     "ssoadmin",
-    "identitystore"
+    "identitystore",
+    "dynamodb",
+    "s3"
   ]
 }
 
