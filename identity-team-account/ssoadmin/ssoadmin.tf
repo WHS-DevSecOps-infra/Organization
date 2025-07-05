@@ -9,8 +9,8 @@ terraform {
 
 # Configure the AWS Provider
 provider "aws" {
-  region                   = "ap-northeast-2"
-  profile                  = "cloudfence-identity"
+  region  = "ap-northeast-2"
+  profile = "cloudfence-identity"
 }
 
 # 현재 활성화된 IAM Identity Center 인스턴스에 연결된 디렉터리 정보를 불러오기
@@ -105,7 +105,7 @@ locals {
   identity_team_admin_accounts = {
     identity_account   = data.terraform_remote_state.organization.outputs.identity_account_id,
     management_account = data.terraform_remote_state.organization.outputs.management_account_id,
-    prod_account      = data.terraform_remote_state.organization.outputs.prod_account_id
+    prod_account       = data.terraform_remote_state.organization.outputs.prod_account_id
   }
   identity_team_readonly_accounts = {
     operation_account = data.terraform_remote_state.organization.outputs.operation_account_id,
@@ -117,11 +117,11 @@ locals {
   cicd_team_admin_accounts = {
     operation_account  = data.terraform_remote_state.organization.outputs.operation_account_id,
     management_account = data.terraform_remote_state.organization.outputs.management_account_id,
-    identity_account  = data.terraform_remote_state.organization.outputs.identity_account_id,
-    security_account  = data.terraform_remote_state.organization.outputs.security_account_id,
-    dev_account       = data.terraform_remote_state.organization.outputs.dev_account_id,
-    stage_account     = data.terraform_remote_state.organization.outputs.stage_account_id,
-    prod_account      = data.terraform_remote_state.organization.outputs.prod_account_id
+    identity_account   = data.terraform_remote_state.organization.outputs.identity_account_id,
+    security_account   = data.terraform_remote_state.organization.outputs.security_account_id,
+    dev_account        = data.terraform_remote_state.organization.outputs.dev_account_id,
+    stage_account      = data.terraform_remote_state.organization.outputs.stage_account_id,
+    prod_account       = data.terraform_remote_state.organization.outputs.prod_account_id
   }
   cicd_team_readonly_accounts = {}
 
@@ -131,23 +131,23 @@ locals {
     prod_account      = data.terraform_remote_state.organization.outputs.prod_account_id
   }
   operation_team_readonly_accounts = {
-    identity_account  = data.terraform_remote_state.organization.outputs.identity_account_id,
-    security_account  = data.terraform_remote_state.organization.outputs.security_account_id,
-    dev_account       = data.terraform_remote_state.organization.outputs.dev_account_id,
-    stage_account     = data.terraform_remote_state.organization.outputs.stage_account_id,
+    identity_account = data.terraform_remote_state.organization.outputs.identity_account_id,
+    security_account = data.terraform_remote_state.organization.outputs.security_account_id,
+    dev_account      = data.terraform_remote_state.organization.outputs.dev_account_id,
+    stage_account    = data.terraform_remote_state.organization.outputs.stage_account_id,
   }
 
   monitoring_team_admin_accounts = {
-    operation_account = data.terraform_remote_state.organization.outputs.operation_account_id
-    prod_account      = data.terraform_remote_state.organization.outputs.prod_account_id
+    operation_account  = data.terraform_remote_state.organization.outputs.operation_account_id
+    prod_account       = data.terraform_remote_state.organization.outputs.prod_account_id
     management_account = data.terraform_remote_state.organization.outputs.management_account_id
-    security_account  = data.terraform_remote_state.organization.outputs.security_account_id,
+    security_account   = data.terraform_remote_state.organization.outputs.security_account_id,
 
   }
   monitoring_team_readonly_accounts = {
-    identity_account  = data.terraform_remote_state.organization.outputs.identity_account_id,
-    dev_account       = data.terraform_remote_state.organization.outputs.dev_account_id,
-    stage_account     = data.terraform_remote_state.organization.outputs.stage_account_id,
+    identity_account = data.terraform_remote_state.organization.outputs.identity_account_id,
+    dev_account      = data.terraform_remote_state.organization.outputs.dev_account_id,
+    stage_account    = data.terraform_remote_state.organization.outputs.stage_account_id,
   }
 
 
@@ -233,12 +233,12 @@ locals {
   cicd_users = {
     "dain_choi"  = data.terraform_remote_state.identitystore.outputs.dain_choi_user_id
     "yujin_kwon" = data.terraform_remote_state.identitystore.outputs.yujin_kwon_user_id
-    "subin_kim"    = data.terraform_remote_state.identitystore.outputs.subin_kim_user_id
+    "subin_kim"  = data.terraform_remote_state.identitystore.outputs.subin_kim_user_id
   }
 
   operation_users = {
-    "hyeinNa"      = data.terraform_remote_state.identitystore.outputs.hyeinNa_user_id
-    "yunho_choi"   = data.terraform_remote_state.identitystore.outputs.yunho_choi_user_id
+    "hyeinNa"    = data.terraform_remote_state.identitystore.outputs.hyeinNa_user_id
+    "yunho_choi" = data.terraform_remote_state.identitystore.outputs.yunho_choi_user_id
   }
   monitoring_users = {
     "chaeyeon_kim" = data.terraform_remote_state.identitystore.outputs.chaeyeonKim_user_id
