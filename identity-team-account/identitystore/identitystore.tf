@@ -10,7 +10,6 @@ terraform {
 # Configure the AWS Provider
 provider "aws" {
   region  = "ap-northeast-2"
-  profile = "cloudfence-identity"
 }
 
 data "aws_ssoadmin_instances" "this" {}

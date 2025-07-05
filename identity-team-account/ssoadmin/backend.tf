@@ -5,6 +5,5 @@ terraform {
     region         = "ap-northeast-2"
     encrypt        = true
     dynamodb_table = "ssoadmin-identity-lock"
-    profile        = "cloudfence-identity"
   }
 }
