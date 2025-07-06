@@ -1,6 +1,10 @@
 #현재 계정정보를 가져옴
 data "aws_caller_identity" "current" {}
 
+provider "aws" {
+  region = "ap-northeast-2"      
+}
+
 # GitHub Actions용 OIDC provider 설정
 resource "aws_iam_openid_connect_provider" "github" {
   url = "https://token.actions.githubusercontent.com"

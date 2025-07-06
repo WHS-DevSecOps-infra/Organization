@@ -12,7 +12,7 @@ provider "aws" {
 
 # S3 버킷 생성
 resource "aws_s3_bucket" "state_org" {
-  bucket = "cloudfence-identity-state"
+  bucket = "cloudfence-stage-state"
 
   lifecycle {
     prevent_destroy = true
@@ -20,7 +20,7 @@ resource "aws_s3_bucket" "state_org" {
 
   tags = {
     Name        = "Terraform State Bucket"
-    Environment = "identity"
+    Environment = "stage"
   }
 }
 
@@ -91,7 +91,7 @@ resource "aws_kms_key" "s3_key" {
         Resource = "*"
         Condition = {
           StringEquals = {
-            "aws:SourceArn"     = "arn:aws:s3:::cloudfence-identity-state",
+            "aws:SourceArn"     = "arn:aws:s3:::cloudfence-stage-state",
             "aws:SourceAccount" = data.aws_caller_identity.current.account_id
           }
         }

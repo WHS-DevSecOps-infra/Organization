@@ -1,53 +1,40 @@
-# identity-team-account의 main.tf
+# operation-team-account의 main.tf
 # modules/github_oidc를 불러와 해당account별 OIDC역할을 자동으로 생성하는 구조
 
 module "github_oidc" {
   source = "../modules/github_oidc"
 
-  role_name = "Organization-role"
+  role_name = "operation-cicd"
 
   # GitHub Actions에서 이 role을 사용할 수 있도록 허용하는 sub조건
   sub_condition = [
     "repo:WHS-DevSecOps-infra/Organization:*",
-    "repo:WHS-DevSecOps-infra/Application-Deployment:*",
-    "repo:WHS-DevSecOps-infra/Monitoring:*"
+    "repo:WHS-DevSecOps-infra/Monitoring:*",
+    "repo:WHS-DevSecOps-infra/Application-Deployment:*"
   ]
 
   # 이 role에 연결할 정책들(IAM 정책 ARN)
   policy_arns = [
-    "arn:aws:iam::aws:policy/AdministratorAccess"
+    "arn:aws:iam::aws:policy/AmazonEC2FullAccess",
+    "arn:aws:iam::aws:policy/AmazonECS_FullAccess",
+    "arn:aws:iam::aws:policy/AmazonElasticContainerRegistryPublicFullAccess",
+    "arn:aws:iam::aws:policy/AmazonVPCFullAccess",
+    "arn:aws:iam::aws:policy/AWSCodeDeployFullAccess",
+    "arn:aws:iam::aws:policy/AWSCodeDeployRoleForECS",
+    "arn:aws:iam::aws:policy/AWSWAFFullAccess",
+    "arn:aws:iam::aws:policy/IAMFullAccess"
   ]
 }
 
 #tfsec:ignore:aws-iam-no-policy-wildcards
 resource "aws_iam_role_policy" "custom_inline_policy" {
-  name = "org-role"
+  name = "operation-cicd"
   role = module.github_oidc.oidc_role_name # 모듈에서 출력된 role이름 참조
 
   policy = jsonencode({
-    Version = "2012-10-17",
-    Statement = [
+    "Version" : "2012-10-17",
+    "Statement" : [
       {
-        Effect = "Allow",
-        Action = [
-          "sso:CreatePermissionSet",
-          "sso:DescribePermissionSet",
-          "sso:UpdatePermissionSet",
-          "sso:DeletePermissionSet",
-          "sso:AttachManagedPolicyToPermissionSet",
-          "sso:ListPermissionSets",
-          "sso:ListInstances",
-          "sso:ProvisionPermissionSet",
-          "sso:PutInlinePolicyToPermissionSet",
-          "sso:DeleteInlinePolicyFromPermissionSet",
-          "sso:ListPermissionSetProvisioningStatus",
-          "organizations:*",
-          "identitystore:*"
-        ],
-        Resource = "*"
-      },
-      {
-        "Sid" : "S3Access",
         "Effect" : "Allow",
         "Action" : [
           "s3:*"
@@ -55,6 +42,14 @@ resource "aws_iam_role_policy" "custom_inline_policy" {
         "Resource" : [
           "*"
         ]
+      },
+      {
+        "Effect" : "Allow",
+        "Action" : [
+          "cloudwatch:*",
+          "cloudtrail:*"
+        ],
+        "Resource" : "*"
       },
       {
         "Sid" : "KMSAccess",
