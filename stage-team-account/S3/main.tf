@@ -51,10 +51,53 @@ resource "aws_s3_bucket_public_access_block" "state_org_block" {
   restrict_public_buckets = true
 }
 
+data "aws_caller_identity" "current" {}
+
 # S3 암호화를 위한 KMS 키
 resource "aws_kms_key" "s3_key" {
   description         = "KMS key for S3 encryption"
   enable_key_rotation = true
+
+  # KMS 키 정책 추가
+  policy = jsonencode({
+    Version = "2012-10-17",
+    Statement = [
+
+    # 현재 계정에게 모든 KMS 작업 권한 부여
+    {
+      Sid    = "AllowRootAccountFullAccess",
+      Effect = "Allow",
+      Principal = {
+        AWS = "arn:aws:iam::${data.aws_caller_identity.current.account_id}:root"
+      },
+      Action = "kms:*",
+      Resource = "*"
+    },
+
+    # S3 서비스에게 암복호화 권한 부여
+    {
+      Sid = "AllowS3ServicePrincipal"
+      Effect = "Allow"
+      Principal = {
+        Service = "s3.amazonaws.com"
+      }
+      Action = [
+        "kms:Encrypt",
+        "kms:Decrypt",
+        "kms:ReEncrypt*",
+        "kms:GenerateDataKey*",
+        "kms:DescribeKey"
+      ]
+      Resource = "*"
+      Condition = {
+      StringEquals = {
+        "aws:SourceArn"     = "arn:aws:s3:::cloudfence-stage-state",
+        "aws:SourceAccount" = data.aws_caller_identity.current.account_id
+      }
+    }
+  }
+  ]
+  })
 }
 
 # S3 버킷 서버 측 암호화
