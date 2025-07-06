@@ -18,6 +18,8 @@ locals {
     "securitylake",
     "opensearch",
     "firehose",
+    "eventbridge",
+    "lambda",
     "dynamodb",
     "s3"
   ]

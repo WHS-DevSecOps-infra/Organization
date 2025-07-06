@@ -18,7 +18,9 @@ locals {
     "ec2",
     "ecs",
     "alb",
-    "cloudwatch",
+    "waf",
+    "eventbridge",
+    "lambda",
     "dynamodb",
     "s3"
   ]
