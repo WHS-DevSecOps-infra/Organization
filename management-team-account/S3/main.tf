@@ -12,7 +12,7 @@ provider "aws" {
 
 # S3 버킷 생성
 resource "aws_s3_bucket" "state_org" {
-  bucket = "cloudfence-identity-state"
+  bucket = "cloudfence-management-state"
 
   lifecycle {
     prevent_destroy = true
@@ -20,7 +20,7 @@ resource "aws_s3_bucket" "state_org" {
 
   tags = {
     Name        = "Terraform State Bucket"
-    Environment = "identity"
+    Environment = "management"
   }
 }
 
@@ -51,7 +51,9 @@ resource "aws_s3_bucket_public_access_block" "state_org_block" {
   restrict_public_buckets = true
 }
 
+
 data "aws_caller_identity" "current" {}
+
 
 # S3 암호화를 위한 KMS 키
 resource "aws_kms_key" "s3_key" {
@@ -91,7 +93,7 @@ resource "aws_kms_key" "s3_key" {
         Resource = "*"
         Condition = {
           StringEquals = {
-            "aws:SourceArn"     = "arn:aws:s3:::cloudfence-identity-state",
+            "aws:SourceArn"     = "arn:aws:s3:::cloudfence-management-state",
             "aws:SourceAccount" = data.aws_caller_identity.current.account_id
           }
         }
