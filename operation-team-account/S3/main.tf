@@ -54,7 +54,7 @@ resource "aws_s3_bucket_public_access_block" "state_org_block" {
 # S3 암호화를 위한 KMS 키
 resource "aws_kms_key" "s3_key" {
   description         = "KMS key for S3 encryption"
-  enable_key_rotation = true    
+  enable_key_rotation = true
 }
 
 # S3 버킷 서버 측 암호화
