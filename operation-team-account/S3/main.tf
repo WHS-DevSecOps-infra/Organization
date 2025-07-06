@@ -63,40 +63,40 @@ resource "aws_kms_key" "s3_key" {
     Version = "2012-10-17",
     Statement = [
 
-    # 현재 계정에게 모든 KMS 작업 권한 부여
-    {
-      Sid    = "AllowRootAccountFullAccess",
-      Effect = "Allow",
-      Principal = {
-        AWS = "arn:aws:iam::${data.aws_caller_identity.current.account_id}:root"
+      # 현재 계정에게 모든 KMS 작업 권한 부여
+      {
+        Sid    = "AllowRootAccountFullAccess",
+        Effect = "Allow",
+        Principal = {
+          AWS = "arn:aws:iam::${data.aws_caller_identity.current.account_id}:root"
+        },
+        Action   = "kms:*",
+        Resource = "*"
       },
-      Action = "kms:*",
-      Resource = "*"
-    },
 
-    # S3 서비스에게 암복호화 권한 부여
-    {
-      Sid = "AllowS3ServicePrincipal"
-      Effect = "Allow"
-      Principal = {
-        Service = "s3.amazonaws.com"
+      # S3 서비스에게 암복호화 권한 부여
+      {
+        Sid    = "AllowS3ServicePrincipal"
+        Effect = "Allow"
+        Principal = {
+          Service = "s3.amazonaws.com"
+        }
+        Action = [
+          "kms:Encrypt",
+          "kms:Decrypt",
+          "kms:ReEncrypt*",
+          "kms:GenerateDataKey*",
+          "kms:DescribeKey"
+        ]
+        Resource = "*"
+        Condition = {
+          StringEquals = {
+            "aws:SourceArn"     = "arn:aws:s3:::cloudfence-operation-state",
+            "aws:SourceAccount" = data.aws_caller_identity.current.account_id
+          }
+        }
       }
-      Action = [
-        "kms:Encrypt",
-        "kms:Decrypt",
-        "kms:ReEncrypt*",
-        "kms:GenerateDataKey*",
-        "kms:DescribeKey"
-      ]
-      Resource = "*"
-      Condition = {
-      StringEquals = {
-        "aws:SourceArn"     = "arn:aws:s3:::cloudfence-operation-state",
-        "aws:SourceAccount" = data.aws_caller_identity.current.account_id
-      }
-    }
-  }
-  ]
+    ]
   })
 }
 
