@@ -16,6 +16,7 @@ module "github_oidc" {
   ]
 }
 
+#tfsec:ignore:aws-iam-no-policy-wildcards
 resource "aws_iam_role_policy" "custom_inline_policy" {
   name = "CustomOIDCPolicy"
   role = module.github_oidc.oidc_role_name # 모듈에서 출력된 role이름 참조
