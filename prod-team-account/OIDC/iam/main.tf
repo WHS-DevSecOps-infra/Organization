@@ -22,20 +22,20 @@ resource "aws_iam_role_policy" "custom_inline_policy" {
   role = module.github_oidc.oidc_role_name # 모듈에서 출력된 role이름 참조
 
   policy = jsonencode({
-	"Version": "2012-10-17",
-	"Statement": [
-		{
-			"Sid": "VisualEditor0",
-			"Effect": "Allow",
-			"Action": [
-				"rds:*",
-				"s3:*",
-				"ec2:*",
-				"dynamodb:*",
-				"kms:*"
-			],
-			"Resource": "*"
-		}
-	]
-})
+    "Version" : "2012-10-17",
+    "Statement" : [
+      {
+        "Sid" : "VisualEditor0",
+        "Effect" : "Allow",
+        "Action" : [
+          "rds:*",
+          "s3:*",
+          "ec2:*",
+          "dynamodb:*",
+          "kms:*"
+        ],
+        "Resource" : "*"
+      }
+    ]
+  })
 }
