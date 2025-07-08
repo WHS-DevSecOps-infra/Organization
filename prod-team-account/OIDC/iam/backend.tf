@@ -1,3 +1,4 @@
+
 terraform {
   backend "s3" {
     bucket         = "cloudfence-prod-state"
@@ -5,5 +6,6 @@ terraform {
     region         = "ap-northeast-2"
     encrypt        = true
     dynamodb_table = "s3-prod-lock"
+    profile        = "whs-sso-prod"
   }
 }
