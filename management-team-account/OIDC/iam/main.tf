@@ -6,8 +6,8 @@ module "github_oidc" {
   role_name = "management-role"
 
   # GitHub Actions에서 이 role을 사용할 수 있도록 허용하는 sub조건
-  sub_condition =  "repo:WHS-DevSecOps-infra/Organization:*"
-                    
+  sub_condition = "repo:WHS-DevSecOps-infra/Organization:*"
+
 
   # 이 role에 연결할 정책들(IAM 정책 ARN)
   policy_arns = [
@@ -26,10 +26,10 @@ resource "aws_iam_role_policy" "custom_inline_policy" {
       {
         Effect = "Allow",
         Action = [
-				"s3:*",
-				"dynamoDB:*",
-				"kms:*"
-			],
+          "s3:*",
+          "dynamoDB:*",
+          "kms:*"
+        ],
         Resource = "*"
       },
       {
