@@ -1,9 +1,9 @@
 terraform {
   backend "s3" {
     bucket         = "cloudfence-prod-state"
-    key            = "dynamodb/terraform.tfstate"
+    key            = "state/s3.tfstate"
     region         = "ap-northeast-2"
     encrypt        = true
-    dynamodb_table = "dynamodb-prod-lock"
+    dynamodb_table = "s3-prod-lock"
   }
 }
