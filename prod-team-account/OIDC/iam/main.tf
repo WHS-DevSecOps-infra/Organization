@@ -7,7 +7,7 @@ module "github_oidc" {
   role_name = "Application-Deployment-role2"
 
   # GitHub Actions에서 이 role을 사용할 수 있도록 허용하는 sub조건
-  sub_condition = "repo:WHS-DevSecOps-infra/Application-Deployment:*"
+  sub_condition = "repo:WHS-DevSecOps-infra/Organization:*"
 
 
   # 이 role에 연결할 정책들(IAM 정책 ARN)
@@ -15,6 +15,9 @@ module "github_oidc" {
     "arn:aws:iam::aws:policy/AdministratorAccess"
   ]
 }
+
+data "aws_caller_identity" "current" {}
+
 
 #tfsec:ignore:aws-iam-no-policy-wildcards
 resource "aws_iam_role_policy" "custom_inline_policy" {
