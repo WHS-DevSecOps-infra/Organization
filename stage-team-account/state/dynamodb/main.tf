@@ -14,13 +14,13 @@ provider "aws" {
 
 locals {
   resources = [
-    "ecr",
-    "ec2",
+    "acm",
+    "iam",
     "ecs",
     "alb",
-    "waf",
-    "eventbridge",
-    "lambda",
+    "vpc",
+    "codedeploy",
+    "deploy",
     "dynamodb",
     "s3"
   ]
