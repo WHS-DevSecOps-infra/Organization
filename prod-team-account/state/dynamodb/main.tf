@@ -14,13 +14,13 @@ provider "aws" {
 
 locals {
   resources = [
-    "ecr",
-    "ec2",
+    "acm",
+    "iam",
     "ecs",
     "alb",
-    "waf",
-    "eventbridge",
-    "lambda",
+    "vpc",
+    "codedeploy",
+    "deploy",
     "dynamodb",
     "s3"
   ]
@@ -28,7 +28,7 @@ locals {
 
 resource "aws_dynamodb_table" "resource_locks" {
   for_each     = toset(local.resources)
-  name         = "${each.key}-stage-lock"
+  name         = "${each.key}-prod-lock"
   billing_mode = "PAY_PER_REQUEST"
   hash_key     = "LockID"
 
@@ -44,6 +44,6 @@ resource "aws_dynamodb_table" "resource_locks" {
 
   tags = {
     Name        = "${each.key} Lock Table"
-    Environment = "stage"
+    Environment = "prod"
   }
 }

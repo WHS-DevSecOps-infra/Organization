@@ -22,7 +22,11 @@ data "aws_ssoadmin_instances" "this" {}
 data "terraform_remote_state" "organization" {
   backend = "s3"
   config = {
+<<<<<<< HEAD
+    bucket         = "cloudfence-identity-state"
+=======
     bucket         = "cloudfence-identity-bucket"
+>>>>>>> 6db8d39553654901d25bda9b3c66010b60c829b9
     key            = "organization/organizations.tfstate"
     region         = "ap-northeast-2"
     encrypt        = true
@@ -34,7 +38,11 @@ data "terraform_remote_state" "organization" {
 data "terraform_remote_state" "identitystore" {
   backend = "s3"
   config = {
+<<<<<<< HEAD
+    bucket         = "cloudfence-identity-state"
+=======
     bucket         = "cloudfence-identity-bucket"
+>>>>>>> 6db8d39553654901d25bda9b3c66010b60c829b9
     key            = "organization/identitystore.tfstate"
     region         = "ap-northeast-2"
     encrypt        = true
