@@ -23,7 +23,7 @@ data "terraform_remote_state" "organization" {
   backend = "s3"
   config = {
     bucket         = "cloudfence-identity-bucket"
-    key            = "organizations/terraform.tfstate"
+    key            = "organization/organizations.tfstate"
     region         = "ap-northeast-2"
     encrypt        = true
     dynamodb_table = "organizations-identity-lock"
@@ -35,7 +35,7 @@ data "terraform_remote_state" "identitystore" {
   backend = "s3"
   config = {
     bucket         = "cloudfence-identity-bucket"
-    key            = "identitystore/terraform.tfstate"
+    key            = "organization/identitystore.tfstate"
     region         = "ap-northeast-2"
     encrypt        = true
     dynamodb_table = "identitystore-identity-lock"
@@ -195,6 +195,18 @@ locals {
     dev_account       = data.terraform_remote_state.organization.outputs.dev_account_id,
     stage_account     = data.terraform_remote_state.organization.outputs.stage_account_id
   }
+
+
+  application_team_admin_accounts = {}
+  application_team_readonly_accounts = {
+    identity_account   = data.terraform_remote_state.organization.outputs.identity_account_id,
+    management_account = data.terraform_remote_state.organization.outputs.management_account_id,
+    prod_account       = data.terraform_remote_state.organization.outputs.prod_account_id,
+    operation_account = data.terraform_remote_state.organization.outputs.operation_account_id,
+    security_account  = data.terraform_remote_state.organization.outputs.security_account_id,
+    dev_account       = data.terraform_remote_state.organization.outputs.dev_account_id,
+    stage_account     = data.terraform_remote_state.organization.outputs.stage_account_id
+  }
 }
 
 # aws_ssoadmin_* 계열 리소스를 사용하는데, 이건 기본적으로 다음 조건이 필요:
@@ -243,6 +255,11 @@ locals {
     "chaeyeon_kim" = data.terraform_remote_state.identitystore.outputs.chaeyeonKim_user_id
     "luujaiyn"     = data.terraform_remote_state.identitystore.outputs.luujaiyn_user_id
   }
+
+  application_users = {
+    "soobin_kwon" = data.terraform_remote_state.identitystore.outputs.soobin_kwon_user_id
+  }
+
   cicd_admin_user_account_pairs = flatten([
     for user_name, user_id in local.cicd_users : [
       for acc_key, acc in local.cicd_team_admin_accounts : {
@@ -297,6 +314,26 @@ locals {
   monitoring_readonly_user_account_pairs = flatten([
     for user_name, user_id in local.monitoring_users : [
       for acc_key, acc in local.monitoring_team_readonly_accounts : {
+        key        = "${user_name}-${acc}"
+        user_id    = user_id
+        account_id = acc
+      }
+    ]
+  ])
+
+  application_admin_user_account_pairs = flatten([
+    for user_name, user_id in local.application_users : [
+      for acc_key, acc in local.application_team_admin_accounts : {
+        key        = "${user_name}-${acc}"
+        user_id    = user_id
+        account_id = acc
+      }
+    ]
+  ])
+
+  application_readonly_user_account_pairs = flatten([
+    for user_name, user_id in local.application_users : [
+      for acc_key, acc in local.application_team_readonly_accounts : {
         key        = "${user_name}-${acc}"
         user_id    = user_id
         account_id = acc
@@ -390,3 +427,32 @@ resource "aws_ssoadmin_account_assignment" "monitoring_readonly_assignments" {
   target_id          = each.value.account_id
   target_type        = "AWS_ACCOUNT"
 }
+
+# application_admin_user_account_pairs를 사용하여 application 팀의 AdminAccess 권한을 부여하는 리소스
+resource "aws_ssoadmin_account_assignment" "application_admin_assignments" {
+  for_each = {
+    for pair in local.application_admin_user_account_pairs : pair.key => pair
+  }
+
+  instance_arn       = data.aws_ssoadmin_instances.this.arns[0]
+  permission_set_arn = aws_ssoadmin_permission_set.admin_pset.arn
+  principal_id       = each.value.user_id
+  principal_type     = "USER"
+  target_id          = each.value.account_id
+  target_type        = "AWS_ACCOUNT"
+}
+
+# application_readonly_user_account_pairs를 사용하여 application 팀의 ReadOnlyAccess 권한을 부여하는 리소스
+resource "aws_ssoadmin_account_assignment" "application_readonly_assignments" {
+  for_each = {
+    for pair in local.application_readonly_user_account_pairs : pair.key => pair
+  }
+
+  instance_arn       = data.aws_ssoadmin_instances.this.arns[0]
+  permission_set_arn = aws_ssoadmin_permission_set.readonly_pset.arn
+  principal_id       = each.value.user_id
+  principal_type     = "USER"
+  target_id          = each.value.account_id
+  target_type        = "AWS_ACCOUNT"
+}
+
