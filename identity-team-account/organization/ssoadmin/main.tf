@@ -199,13 +199,12 @@ locals {
 
   application_team_admin_accounts = {}
   application_team_readonly_accounts = {
-    identity_account   = data.terraform_remote_state.organization.outputs.identity_account_id,
-    management_account = data.terraform_remote_state.organization.outputs.management_account_id,
-    prod_account       = data.terraform_remote_state.organization.outputs.prod_account_id,
-    operation_account  = data.terraform_remote_state.organization.outputs.operation_account_id,
-    security_account   = data.terraform_remote_state.organization.outputs.security_account_id,
-    dev_account        = data.terraform_remote_state.organization.outputs.dev_account_id,
-    stage_account      = data.terraform_remote_state.organization.outputs.stage_account_id
+    identity_account  = data.terraform_remote_state.organization.outputs.identity_account_id,
+    prod_account      = data.terraform_remote_state.organization.outputs.prod_account_id,
+    operation_account = data.terraform_remote_state.organization.outputs.operation_account_id,
+    security_account  = data.terraform_remote_state.organization.outputs.security_account_id,
+    dev_account       = data.terraform_remote_state.organization.outputs.dev_account_id,
+    stage_account     = data.terraform_remote_state.organization.outputs.stage_account_id
   }
 }
 
