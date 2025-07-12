@@ -132,6 +132,19 @@ resource "aws_identitystore_user" "subin_kim_instance" {
     family_name = "Kim"
   }
 }
+resource "aws_identitystore_user" "soobin_kwon_instance" {
+  identity_store_id = data.aws_ssoadmin_instances.this.identity_store_ids[0]
+  user_name         = "Soobin_kwon"
+  display_name      = "Kwon Soobin"
+  emails {
+    value   = "rnjs0332@gmail.com"
+    primary = true
+  }
+  name {
+    given_name  = "Soobin"
+    family_name = "Kwon"
+  }
+}
 
 output "sh1220_user_id" {
   value = aws_identitystore_user.sh1220_instance.user_id
@@ -163,4 +176,8 @@ output "chaeyeonKim_user_id" {
 
 output "subin_kim_user_id" {
   value = aws_identitystore_user.subin_kim_instance.user_id
+}
+
+output "ssoobin_kwon_user_id" {
+  value = aws_identitystore_user.soobin_kwon_instance.user_id
 }
