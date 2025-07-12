@@ -1,9 +1,9 @@
 terraform {
   backend "s3" {
     bucket         = "cloudfence-identity-bucket"
-    key            = "identitystore/terraform.tfstate"
+    key            = "state/dynamodb.tfstate"
     region         = "ap-northeast-2"
     encrypt        = true
-    dynamodb_table = "identitystore-identity-lock"
+    dynamodb_table = "dynamodb-identity-lock"
   }
 }
