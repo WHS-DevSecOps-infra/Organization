@@ -178,6 +178,6 @@ output "subin_kim_user_id" {
   value = aws_identitystore_user.subin_kim_instance.user_id
 }
 
-output "ssoobin_kwon_user_id" {
+output "soobin_kwon_user_id" {
   value = aws_identitystore_user.soobin_kwon_instance.user_id
 }
