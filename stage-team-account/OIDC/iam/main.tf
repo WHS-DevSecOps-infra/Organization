@@ -6,20 +6,17 @@ module "github_oidc" {
 
   role_name = "Application-deployment-role3"
 
+  thumbprint_list = ["d89e3bd43d5d909b47a18977aa9d5ce36cee184c"]
   # GitHub Actions에서 이 role을 사용할 수 있도록 허용하는 sub조건
-  sub_condition = "repo:WHS-DevSecOps-infra/Organization:*"
+  sub_condition = ["repo:WHS-DevSecOps-infra/Organization:*",
+  "repo:WHS-DevSecOps-infra/Application-Deployment:*"]
 
 
   # 이 role에 연결할 정책들(IAM 정책 ARN)
-  policy_arns = [
-    "arn:aws:iam::aws:policy/AdministratorAccess"
-  ]
+  policy_arns = []
+
 }
 
-provider "aws" {
-  region  = "ap-northeast-2"
-  profile = "whs-sso-operation"
-}
 
 
 #tfsec:ignore:aws-iam-no-policy-wildcards
@@ -38,7 +35,8 @@ resource "aws_iam_role_policy" "custom_inline_policy" {
           "ec2:*",
           "rds:*",
           "dynamodb:*",
-          "kms:*"
+          "kms:*",
+          "iam:*"
         ],
         "Resource" : "*"
       }
