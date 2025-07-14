@@ -41,7 +41,7 @@ locals {
     operation_account  = data.terraform_remote_state.organization.outputs.operation_account_id
     prod_account       = data.terraform_remote_state.organization.outputs.prod_account_id
     management_account = data.terraform_remote_state.organization.outputs.management_account_id
-    security_account   = data.terraform_remote_state.organization.outputs.security_account_id,
+    security_account   = data.terraform_remote_state.organization.outputs.security_account_id
 
   }
   monitoring_team_readonly_accounts = {
