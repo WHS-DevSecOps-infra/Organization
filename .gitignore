@@ -4,10 +4,10 @@
 *.tfstate.*             # 상태 파일 백업
 terraform.tfstate
 terraform.tfstate.*
-*.tfvars
+#*.tfvars
 *.tfstate.backup
 .terraform.lock.hcl
-terraform.tfvars        # 민감 정보 입력용 파일
+#terraform.tfvars        # 민감 정보 입력용 파일
 *.auto.tfvars
 crash.log               # Terraform 충돌 로그
 .terraform
