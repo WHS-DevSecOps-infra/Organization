@@ -109,7 +109,7 @@ resource "aws_ssoadmin_account_assignment" "sh1220_admin_assignments" {
   principal_type     = "USER"
   target_id          = each.value
   target_type        = "AWS_ACCOUNT"
-  depends_on         = [] # 사용자 리소스가 먼저 생성되어야 함
+  # 사용자 리소스가 먼저 생성되어야 함
 
 }
 resource "aws_ssoadmin_account_assignment" "sh1220_readonly_assignments" {
