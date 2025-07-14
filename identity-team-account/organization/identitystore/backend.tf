@@ -1,6 +1,6 @@
 terraform {
   backend "s3" {
-    bucket         = "cloudfence-identity-bucket"
+    bucket         = "cloudfence-identity-state"
     key            = "organization/identitystore.tfstate"
     region         = "ap-northeast-2"
     encrypt        = true
