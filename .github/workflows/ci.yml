@@ -1,4 +1,4 @@
-name: Application-Deployment CI
+name: Organization CI
 
 on:
   pull_request: # PR이 main 브랜치로 올 때 실행
