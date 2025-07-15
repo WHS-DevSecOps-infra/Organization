@@ -53,7 +53,7 @@ users = {
     given_name   = "Subin"
     family_name  = "Kim"
   }
-  Soobin_kwon = {
+  soobin_kwon = {
     display_name = "Kwon Soobin"
     email        = "rnjs0332@gmail.com"
     given_name   = "Soobin"

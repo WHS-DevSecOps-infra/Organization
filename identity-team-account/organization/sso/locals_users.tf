@@ -17,7 +17,7 @@ locals {
   }
 
   application_users = {
-    "soobin_kwon" = data.terraform_remote_state.identitystore.outputs.user_ids["Soobin_kwon"]
+    "soobin_kwon" = data.terraform_remote_state.identitystore.outputs.user_ids["soobin_kwon"]
   }
 
   cicd_admin_user_account_pairs = flatten([
