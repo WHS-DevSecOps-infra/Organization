@@ -12,9 +12,9 @@ provider "aws" {
 
 # KMS 모듈 호출
 module "s3_kms" {
-  source      = "../../../modules/S3_kms"
-  description = "KMS key for S3 encryption"
-  s3_bucket_arn  = "arn:aws:s3:::cloudfence-stage-state"
+  source        = "../../../modules/S3_kms"
+  description   = "KMS key for S3 encryption"
+  s3_bucket_arn = "arn:aws:s3:::cloudfence-stage-state"
 }
 
 # S3 버킷 생성

@@ -1,6 +1,6 @@
 variable "description" {
-  type        = string
-  default     = "KMS key for S3 encryption"
+  type    = string
+  default = "KMS key for S3 encryption"
 }
 
 variable "s3_bucket_arn" {
