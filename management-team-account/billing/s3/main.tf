@@ -1,8 +1,15 @@
 
 # billing을 담을 bucket 생성
 resource "aws_s3_bucket" "billing" {
-  bucket        = "billing-report-bucket"
-  force_destroy = true
+  bucket = "billing-report-bucket"
+  lifecycle {
+    prevent_destroy = false
+  }
+
+  tags = {
+    Name        = "Billing Bucket"
+    Environment = "management"
+  }
 }
 
 # billing에서 bucket에 putobject를 하는 것을 허용
