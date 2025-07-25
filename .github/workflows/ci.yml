@@ -60,10 +60,17 @@ jobs:
             ROLE_KEY="${ROLE_MAP[$TOP_DIR]}"
 
             if [ -n "$ROLE_KEY" ]; then
+              if [ "$DIR" == "$TOP_DIR" ]; then
                 TF_COUNT=$(find "$DIR" -maxdepth 1 -name '*.tf' | wc -l)
                 if [ "$TF_COUNT" -gt 0 ]; then
                   echo "$DIR|$ROLE_KEY" >> $TMP_FILE
                 fi
+              else
+                TF_COUNT=$(find "$DIR" -maxdepth 1 -name '*.tf' | wc -l)
+                if [ "$TF_COUNT" -gt 0 ]; then
+                  echo "$DIR|$ROLE_KEY" >> $TMP_FILE
+                fi
+              fi
             fi
           done
 
@@ -134,11 +141,11 @@ jobs:
 
       - name: Run tfsec (fail on HIGH+) # HIGH 이상이면 실패 처리
         working-directory: ${{ matrix.dir }}
-        run: tfsec --minimum-severity HIGH --no-color ${{ matrix.dir }}
+        run: tfsec --minimum-severity HIGH --no-color .
 
       - name: Run tfsec (all severities) and save JSON # tfsec 다시 실행 후 전체 결과 JSON으로 저장
         run: |
-          tfsec --format json --out tfsec_results.json ${{ matrix.dir }}
+          tfsec --format json --out tfsec_results.json .
         working-directory: ${{ matrix.dir }}
 
       - name: Notify Slack for LOW/MEDIUM tfsec findings # LOW, Medium으로 감지된 내용을 slack 전송하고 알림
