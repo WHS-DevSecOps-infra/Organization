@@ -150,6 +150,7 @@ jobs:
 
       - name: Notify Slack for LOW/MEDIUM tfsec findings # LOW, Medium으로 감지된 내용을 slack 전송하고 알림
         if: always()
+        working-directory: ${{ matrix.dir }}
         run: |
           # 개수로 감지 
           LOW_MEDIUM_COUNT=$(jq '[.results[] | select(.severity=="LOW" or .severity=="MEDIUM")] | length' tfsec_results.json)
