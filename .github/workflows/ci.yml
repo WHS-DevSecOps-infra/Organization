@@ -39,7 +39,6 @@ jobs:
           echo "Changed files:"
           echo "$FILES"
 
-
           # 디렉토리명 → IAM Role 키 매핑
           declare -A ROLE_MAP=(
             ["operation-team-account"]="ROLE_ARN_OPERATION"
@@ -73,7 +72,6 @@ jobs:
               fi
             fi
           done
-
 
           # 중복 제거 후 JSON 형식의 실행 matrix 생성
           UNIQUE_LINES=$(sort $TMP_FILE | uniq)
@@ -128,7 +126,6 @@ jobs:
 
       - name: Install Terraform
         run: |
-
           # Terraform CLI 설치
           curl -LO https://releases.hashicorp.com/terraform/1.4.0/terraform_1.4.0_linux_amd64.zip
           unzip terraform_1.4.0_linux_amd64.zip
@@ -141,16 +138,15 @@ jobs:
 
       - name: Run tfsec (fail on HIGH+) # HIGH 이상이면 실패 처리
         working-directory: ${{ matrix.dir }}
-        run: tfsec --minimum-severity HIGH --no-color .
+        run: tfsec --minimum-severity HIGH --no-color ${{ matrix.dir }}
 
       - name: Run tfsec (all severities) and save JSON # tfsec 다시 실행 후 전체 결과 JSON으로 저장
         run: |
-          tfsec --format json --out tfsec_results.json .
+          tfsec --format json --out tfsec_results.json ${{ matrix.dir }}
         working-directory: ${{ matrix.dir }}
 
       - name: Notify Slack for LOW/MEDIUM tfsec findings # LOW, Medium으로 감지된 내용을 slack 전송하고 알림
         if: always()
-        working-directory: ${{ matrix.dir }}
         run: |
           # 개수로 감지 
           LOW_MEDIUM_COUNT=$(jq '[.results[] | select(.severity=="LOW" or .severity=="MEDIUM")] | length' tfsec_results.json)
@@ -173,7 +169,7 @@ jobs:
           fi
 
       - name: Terraform Init # provider, backend 초기화
-        run: terraform init
+        run: terraform init -input=false
         working-directory: ${{ matrix.dir }}
 
       - name: Terraform Format Check # 포맷 체크 (코드 스타일)
@@ -194,7 +190,6 @@ jobs:
           PLAN_TXT=plan.txt
           PLAN_JSON=plan.json
 
-
           if terraform plan -no-color -out=$PLAN_FILE > /dev/null 2> plan_error.txt; then
             echo "PLAN_FAILED=false" >> $GITHUB_ENV
             terraform show -no-color $PLAN_FILE > $PLAN_TXT
@@ -208,6 +203,7 @@ jobs:
           sed 's/`/\\`/g' $PLAN_TXT | tr -d '\r' | sed -r "s/\x1B\[[0-9;]*[JKmsu]//g" > cleaned_plan.txt
           PLAN_CONTENT=$(cat cleaned_plan.txt)
           PLAN_ERROR=$(cat plan_error.txt || echo "No error captured")
+
           {
             echo "PLAN_CONTENT<<EOF"
             echo "$PLAN_CONTENT"
@@ -253,7 +249,7 @@ jobs:
         run: |
           git fetch origin ${{ github.base_ref }}
           git checkout origin/${{ github.base_ref }} -- .
-
+          run: terraform init -input=false
           infracost breakdown \
             --path=. \
             --format=json \
@@ -263,7 +259,6 @@ jobs:
         working-directory: ${{ matrix.dir }}
         run: |
           git checkout ${{ github.head_ref }}
-
 
           infracost diff \
             --path=. \
