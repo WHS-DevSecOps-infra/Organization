@@ -1,24 +1,20 @@
-name: Organization CI
+name: Monitoring CI
 
 on:
   pull_request:
-    branches: [main]
-    paths:
+    branches: [main] # main 브랜치로 PR이 열릴 때 실행
+    paths: # 아래 디렉토리 중 하나라도 변경되었을 경우에만 실행
       - "operation-team-account/**"
       - "identity-team-account/**"
-      - "prod-team-account/**"
-      - "dev-team-account/**"
-      - "security-team-account/**"
-      - "stage-team-account/**"
       - "management-team-account/**"
 
 permissions:
   contents: read
-  pull-requests: write
-  id-token: write
+  pull-requests: write #PR comment 작성
+  id-token: write # OIDC 인증용
 
 jobs:
-  detect-changes:
+  detect-changes: # 다음 Job에서 사용할 matrix 값
     runs-on: ubuntu-latest
     outputs:
       matrix: ${{ steps.set.outputs.matrix }}
@@ -26,18 +22,20 @@ jobs:
       - name: Checkout Code
         uses: actions/checkout@v3
         with:
-          fetch-depth: 0
+          fetch-depth: 0 # 전체 커밋 내역 필요 (diff 비교용)
 
-      - name: Fetch origin/main
+      - name: Fetch origin/main # main 브랜치 가져옴 (diff 비교 대상)
         run: git fetch origin main
 
       - name: Detect Changed Directories & Build Matrix
         id: set
         run: |
-          FILES=$(git diff --name-only origin/main...${{ github.sha }})
+          # 변경된 파일 목록을 가져옴
+          FILES=$(git diff --name-only origin/main...${{ github.sha }}) 
           echo "Changed files:"
           echo "$FILES"
 
+          # 디렉토리명 → IAM Role 키 매핑
           declare -A ROLE_MAP=(
             ["operation-team-account"]="ROLE_ARN_OPERATION"
             ["identity-team-account"]="ROLE_ARN_IDENTITY"
@@ -50,29 +48,23 @@ jobs:
 
           TMP_FILE=$(mktemp)
 
+          # 변경된 디렉토리들 중 .tf 파일이 있는 디렉토리만 필터링
           for FILE in $FILES; do
             DIR=$(dirname "$FILE")
             TOP_DIR=$(echo $DIR | cut -d/ -f1)
             ROLE_KEY="${ROLE_MAP[$TOP_DIR]}"
 
             if [ -n "$ROLE_KEY" ]; then
-              if [ "$DIR" == "$TOP_DIR" ]; then
-                TF_COUNT=$(find "$DIR" -maxdepth 1 -name '*.tf' | wc -l)
-                if [ "$TF_COUNT" -gt 0 ]; then
-                  echo "$DIR|$ROLE_KEY" >> $TMP_FILE
-                fi
-              else
-                TF_COUNT=$(find "$DIR" -maxdepth 1 -name '*.tf' | wc -l)
-                if [ "$TF_COUNT" -gt 0 ]; then
-                  echo "$DIR|$ROLE_KEY" >> $TMP_FILE
-                fi
+              TF_COUNT=$(find "$DIR" -maxdepth 1 -name '*.tf' | wc -l)
+              if [ "$TF_COUNT" -gt 0 ]; then
+                echo "$DIR|$ROLE_KEY" >> $TMP_FILE
               fi
             fi
           done
 
+          # 중복 제거 후 JSON 형식의 실행 matrix 생성
           UNIQUE_LINES=$(sort $TMP_FILE | uniq)
-          MATRIX_JSON="["
-          FIRST=1
+          MATRIX_JSON="["; FIRST=1
 
           while IFS= read -r LINE; do
             DIR=$(echo $LINE | cut -d"|" -f1)
@@ -96,13 +88,13 @@ jobs:
 
   terraform-ci:
     needs: detect-changes
-    if: ${{ needs.detect-changes.outputs.matrix != '[]' }}
+    if: ${{ needs.detect-changes.outputs.matrix != '[]' }} # 변경된 디렉토리가 있을 때만 실행
     runs-on: ubuntu-latest
 
     strategy:
       matrix:
-        include: ${{ fromJson(needs.detect-changes.outputs.matrix) }}
-      fail-fast: false
+        include: ${{ fromJson(needs.detect-changes.outputs.matrix) }} # 변경된 디렉토리별 반복 실행
+      fail-fast: false # 하나 실패해도 나머지 job 실행
 
     env:
       INFRACOST_API_KEY: ${{ secrets.INFRACOST_API_KEY }}
@@ -115,7 +107,7 @@ jobs:
         with:
           fetch-depth: 0
 
-      - name: Configure AWS Credentials
+      - name: Configure AWS Credentials # GitHub OIDC로 AWS 로그인
         uses: aws-actions/configure-aws-credentials@v4
         with:
           aws-region: ap-northeast-2
@@ -123,30 +115,61 @@ jobs:
 
       - name: Install Terraform
         run: |
+          # Terraform CLI 설치
           curl -LO https://releases.hashicorp.com/terraform/1.4.0/terraform_1.4.0_linux_amd64.zip
           unzip terraform_1.4.0_linux_amd64.zip
           sudo mv terraform /usr/local/bin/
 
       - name: Install tfsec
         run: |
+          # 보안 스캐너 설치
           curl -sSL https://raw.githubusercontent.com/aquasecurity/tfsec/master/scripts/install_linux.sh | bash
 
-      - name: Run tfsec (fail on HIGH+)
+      - name: Run tfsec (fail on HIGH+) # HIGH 이상이면 실패 처리
+        working-directory: ${{ matrix.dir }}
         run: tfsec --minimum-severity HIGH --no-color ${{ matrix.dir }}
 
-      - name: Terraform Init
+      - name: Run tfsec (all severities) and save JSON # tfsec 다시 실행 후 전체 결과 JSON으로 저장
+        run: |
+          tfsec --format json --out tfsec_results.json ${{ matrix.dir }}
+        working-directory: ${{ matrix.dir }}
+
+      - name: Notify Slack for LOW/MEDIUM tfsec findings # LOW, Medium으로 감지된 내용을 slack 전송하고 알림
+        if: always()
+        run: |
+          # 개수로 감지 
+          LOW_MEDIUM_COUNT=$(jq '[.results[] | select(.severity=="LOW" or .severity=="MEDIUM")] | length' tfsec_results.json)
+
+          if [ "$LOW_MEDIUM_COUNT" -gt 0 ]; then
+            echo "Sending Slack alert for LOW/MEDIUM findings..."
+
+            MESSAGE=$(jq -r '
+              [.results[] 
+                | select(.severity=="LOW" or .severity=="MEDIUM") 
+                | "- *\(.severity)* [\(.rule_id)]: \(.description)"
+              ] | join("\n")
+            ' tfsec_results.json)
+
+            curl -X POST -H 'Content-type: application/json' \
+              --data "$(jq -n --arg text "* tfsec LOW/MEDIUM Findings in `${{ matrix.dir }}`*\n\n$MESSAGE" '{ text: $text }')" \
+              ${{ secrets.SLACK_WEBHOOK_URL }}
+          else
+            echo "No LOW or MEDIUM findings to notify."
+          fi
+
+      - name: Terraform Init # provider, backend 초기화
         run: terraform init
         working-directory: ${{ matrix.dir }}
 
-      - name: Terraform Format Check
+      - name: Terraform Format Check # 포맷 체크 (코드 스타일)
         run: terraform fmt -check -recursive
         working-directory: ${{ matrix.dir }}
 
-      - name: Terraform Validate
+      - name: Terraform Validate # 문법 검사
         run: terraform validate
         working-directory: ${{ matrix.dir }}
 
-      - name: Terraform Plan
+      - name: Terraform Plan # 실제 배포 전 변경사항 확인
         id: plan
         run: |
           START_TIME=$(date -u +"%Y-%m-%d %H:%M:%S UTC")
@@ -156,33 +179,31 @@ jobs:
           PLAN_TXT=plan.txt
           PLAN_JSON=plan.json
 
-          # Run terraform plan
-          terraform plan -no-color -out=$PLAN_FILE > /dev/null 2> plan_error.txt || echo "PLAN_FAILED=true" >> $GITHUB_ENV
+          if terraform plan -no-color -out=$PLAN_FILE > /dev/null 2> plan_error.txt; then
+            echo "PLAN_FAILED=false" >> $GITHUB_ENV
+            terraform show -no-color $PLAN_FILE > $PLAN_TXT
+            terraform show -json $PLAN_FILE > $PLAN_JSON || true
+          else
+            echo "PLAN_FAILED=true" >> $GITHUB_ENV
+            echo "Plan failed" > $PLAN_TXT
+            echo "{}" > $PLAN_JSON
+          fi
 
-          # Show plan text output
-          terraform show -no-color $PLAN_FILE > $PLAN_TXT 2>/dev/null || echo "Plan failed" > $PLAN_TXT
-
-          # Remove ANSI color codes
-          cat $PLAN_TXT | \
-            sed 's/`/\\`/g' | \
-            tr -d '\r' | \
-            sed -r "s/\x1B\[[0-9;]*[JKmsu]//g" \
-            > cleaned_plan.txt
-
+          sed 's/`/\\`/g' $PLAN_TXT | tr -d '\r' | sed -r "s/\x1B\[[0-9;]*[JKmsu]//g" > cleaned_plan.txt
           PLAN_CONTENT=$(cat cleaned_plan.txt)
+          PLAN_ERROR=$(cat plan_error.txt || echo "No error captured")
 
-          # Save JSON plan for infracost
-          terraform show -json $PLAN_FILE > $PLAN_JSON || true
-
-          # Output plan content for PR comment
           {
             echo "PLAN_CONTENT<<EOF"
             echo "$PLAN_CONTENT"
             echo "EOF"
+            echo "PLAN_ERROR<<EOF"
+            echo "$PLAN_ERROR"
+            echo "EOF"
           } >> $GITHUB_OUTPUT
         working-directory: ${{ matrix.dir }}
 
-      - name: Comment Terraform Plan on PR
+      - name: Comment Terraform Plan on PR # Plan 결과를 PR에 댓글로 작성
         if: github.event.pull_request.number != ''
         uses: peter-evans/create-or-update-comment@v4
         with:
@@ -202,19 +223,45 @@ jobs:
             ${{ steps.plan.outputs.PLAN_CONTENT }}
             ```
 
-      - name: Setup Infracost
-        uses: infracost/actions/setup@v2
+            ### Plan Error (if any)
+            ```
+            ${{ steps.plan.outputs.PLAN_ERROR }}
+            ```
 
-      - name: Infracost Breakdown
-        run: |
-          infracost breakdown \
-            --path=plan.json \
-            --format=json \
-            --out-file=infracost.json
-        working-directory: ${{ matrix.dir }}
-
-      - name: Infracost Comment on Pull Request
-        uses: infracost/actions/comment@v1
+      - name: Setup Infracost # 비용 분석 도구 설정
+        uses: infracost/actions/setup@v3 # v2 에서 v3로 버전 변경(최신 기능 및 버스 픽스)
         with:
-          path: ${{ matrix.dir }}/infracost.json
-          behavior: update
+          api-key: ${{ secrets.INFRACOST_API_KEY }}
+
+      - name: Generate Infracost Baseline # main 브랜치로 체크아웃 후 기존 비용을 저장한 파일(스냅샷) 생성
+        working-directory: ${{ matrix.dir }}
+        run: |
+          git fetch origin ${{ github.base_ref }}
+          git checkout origin/${{ github.base_ref }} -- .
+
+          infracost breakdown \
+            --path=. \
+            --format=json \
+            --out-file infracost-baseline.json
+
+      - name: Generate Infracost Diff # PR 브랜치로 돌아와, 비용 차이를 계산하여 저장
+        working-directory: ${{ matrix.dir }}
+        run: |
+          git checkout ${{ github.head_ref }}
+
+          infracost diff \
+            --path=. \
+            --compare-to infracost-baseline.json \
+            --format=json \
+            --out-file infracost-diff.json
+
+      - name: Post Infracost Comment to PR
+        if: github.event_name == 'pull_request'
+        working-directory: ${{ matrix.dir }}
+        run: |
+          infracost comment github \
+            --path=infracost-diff.json \
+            --repo=${{ github.repository }} \
+            --pull-request=${{ github.event.pull_request.number }} \
+            --github-token=${{ secrets.GITHUB_TOKEN }} \
+            --behavior=update #기존 댓글 갱신
