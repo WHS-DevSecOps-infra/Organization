@@ -8,7 +8,7 @@ module "github_oidc" {
   # GitHub Actions에서 이 role을 사용할 수 있도록 허용하는 sub조건
   sub_condition = ["repo:WHS-DevSecOps-infra/Organization:*",
     "repo:WHS-DevSecOps-infra/Application-Deployment:*",
-  "repo:WHS-DevSecOps-infra/Application-Development:*"]
+    "repo:WHS-DevSecOps-infra/Application-Development:*"]
 
   thumbprint_list = [
     "d89e3bd43d5d909b47a18977aa9d5ce36cee184c"

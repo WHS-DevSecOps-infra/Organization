@@ -39,6 +39,7 @@ jobs:
           echo "Changed files:"
           echo "$FILES"
 
+
           # 디렉토리명 → IAM Role 키 매핑
           declare -A ROLE_MAP=(
             ["operation-team-account"]="ROLE_ARN_OPERATION"
@@ -72,6 +73,7 @@ jobs:
               fi
             fi
           done
+
 
           # 중복 제거 후 JSON 형식의 실행 matrix 생성
           UNIQUE_LINES=$(sort $TMP_FILE | uniq)
@@ -126,6 +128,7 @@ jobs:
 
       - name: Install Terraform
         run: |
+
           # Terraform CLI 설치
           curl -LO https://releases.hashicorp.com/terraform/1.4.0/terraform_1.4.0_linux_amd64.zip
           unzip terraform_1.4.0_linux_amd64.zip
@@ -190,6 +193,7 @@ jobs:
           PLAN_TXT=plan.txt
           PLAN_JSON=plan.json
 
+
           if terraform plan -no-color -out=$PLAN_FILE > /dev/null 2> plan_error.txt; then
             echo "PLAN_FAILED=false" >> $GITHUB_ENV
             terraform show -no-color $PLAN_FILE > $PLAN_TXT
@@ -203,7 +207,6 @@ jobs:
           sed 's/`/\\`/g' $PLAN_TXT | tr -d '\r' | sed -r "s/\x1B\[[0-9;]*[JKmsu]//g" > cleaned_plan.txt
           PLAN_CONTENT=$(cat cleaned_plan.txt)
           PLAN_ERROR=$(cat plan_error.txt || echo "No error captured")
-
           {
             echo "PLAN_CONTENT<<EOF"
             echo "$PLAN_CONTENT"
@@ -259,6 +262,7 @@ jobs:
         working-directory: ${{ matrix.dir }}
         run: |
           git checkout ${{ github.head_ref }}
+
 
           infracost diff \
             --path=. \
