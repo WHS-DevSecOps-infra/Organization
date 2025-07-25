@@ -1,4 +1,4 @@
-name: Monitoring CI
+name: Organization CI
 
 on:
   pull_request:
@@ -6,6 +6,10 @@ on:
     paths: # 아래 디렉토리 중 하나라도 변경되었을 경우에만 실행
       - "operation-team-account/**"
       - "identity-team-account/**"
+      - "prod-team-account/**"
+      - "dev-team-account/**"
+      - "security-team-account/**"
+      - "stage-team-account/**"
       - "management-team-account/**"
 
 permissions:
