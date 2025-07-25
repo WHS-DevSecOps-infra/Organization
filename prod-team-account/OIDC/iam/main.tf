@@ -8,7 +8,9 @@ module "github_oidc" {
   add_root_trust = false
   # GitHub Actions에서 이 role을 사용할 수 있도록 허용하는 sub조건
   sub_condition = ["repo:WHS-DevSecOps-infra/Organization:*",
-  "repo:WHS-DevSecOps-infra/Application-Deployment:*"]
+    "repo:WHS-DevSecOps-infra/Application-Deployment:*",
+    "repo:WHS-DevSecOps-infra/Application-Development:*",
+  "repo:WHS-DevSecOps-infra/Monitoring:*"]
 
   thumbprint_list = ["6938fd4d98bab03faadb97b34396831e3780aea1"]
   # 이 role에 연결할 정책들(IAM 정책 ARN)
