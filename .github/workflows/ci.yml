@@ -263,9 +263,31 @@ jobs:
         if: github.event_name == 'pull_request'
         working-directory: ${{ matrix.dir }}
         run: |
-          infracost comment github \
-            --path=infracost-diff.json \
-            --repo=${{ github.repository }} \
-            --pull-request=${{ github.event.pull_request.number }} \
-            --github-token=${{ secrets.GITHUB_TOKEN }} \
-            --behavior=update #기존 댓글 갱신
+          # diff JSON에 projects 배열이 비어있는지 확인
+          if jq '.projects | length' infracost-diff.json | grep -q '^0$'; then
+            # 변경사항 없음 메시지 (로그용)
+            echo "✅ No infrastructure cost changes detected."
+            echo "Generating and posting full cost breakdown for current infrastructure."
+
+            # 전체 비용 스냅샷 생성
+            infracost breakdown \
+              --path=. \
+              --format=json \
+              --out-file infracost-full.json
+
+            # 전체 비용 분석 댓글
+            infracost comment github \
+              --path=infracost-full.json \
+              --repo=${{ github.repository }} \
+              --pull-request=${{ github.event.pull_request.number }} \
+              --github-token=${{ secrets.GITHUB_TOKEN }} \
+              --behavior=update
+          else
+            # 변경사항이 있을 때는 diff 댓글
+            infracost comment github \
+              --path=infracost-diff.json \
+              --repo=${{ github.repository }} \
+              --pull-request=${{ github.event.pull_request.number }} \
+              --github-token=${{ secrets.GITHUB_TOKEN }} \
+              --behavior=update
+          fi
