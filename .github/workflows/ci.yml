@@ -60,17 +60,10 @@ jobs:
             ROLE_KEY="${ROLE_MAP[$TOP_DIR]}"
 
             if [ -n "$ROLE_KEY" ]; then
-              if [ "$DIR" == "$TOP_DIR" ]; then
                 TF_COUNT=$(find "$DIR" -maxdepth 1 -name '*.tf' | wc -l)
                 if [ "$TF_COUNT" -gt 0 ]; then
                   echo "$DIR|$ROLE_KEY" >> $TMP_FILE
                 fi
-              else
-                TF_COUNT=$(find "$DIR" -maxdepth 1 -name '*.tf' | wc -l)
-                if [ "$TF_COUNT" -gt 0 ]; then
-                  echo "$DIR|$ROLE_KEY" >> $TMP_FILE
-                fi
-              fi
             fi
           done
 
