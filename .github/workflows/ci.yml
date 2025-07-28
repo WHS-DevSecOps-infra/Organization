@@ -256,7 +256,7 @@ jobs:
 
           infracost breakdown \
             --path=. \
-            --terraform-plan-flags="-out=tfplan-base.binary" \
+            --terraform-plan-file=tfplan-base.binary \
             --format=json \
             --out-file infracost-baseline.json
 
@@ -269,7 +269,7 @@ jobs:
 
           infracost diff \
             --path=. \
-            --terraform-plan-flags="-out=tfplan-pr.binary" \
+            --terraform-plan-file=tfplan-pr.binary \
             --compare-to infracost-baseline.json \
             --format=json \
             --out-file infracost-diff.json
