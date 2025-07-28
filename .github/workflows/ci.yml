@@ -256,7 +256,6 @@ jobs:
             --path=. \
             --format=json \
             --out-file infracost-baseline.json
-            --show-skipped
 
       - name: Generate Infracost Diff # PR 브랜치로 돌아와, 비용 차이를 계산하여 저장
         working-directory: ${{ matrix.dir }}
@@ -268,7 +267,6 @@ jobs:
             --compare-to infracost-baseline.json \
             --format=json \
             --out-file infracost-diff.json
-            --show-skipped
 
       - name: Post Infracost Comment to PR
         if: github.event_name == 'pull_request'
@@ -286,7 +284,6 @@ jobs:
               --path=. \
               --format=json \
               --out-file infracost-full.json
-              --show-skipped
 
             # 전체 비용 분석 댓글
             infracost comment github \
