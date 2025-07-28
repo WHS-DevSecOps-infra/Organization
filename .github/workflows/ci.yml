@@ -252,8 +252,11 @@ jobs:
           git fetch origin ${{ github.base_ref }}
           git checkout origin/${{ github.base_ref }} -- .
           terraform init -input=false
+          terraform plan -input=false -out=tfplan-base.binary
+
           infracost breakdown \
             --path=. \
+            --terraform-plan-flags="-out=tfplan-base.binary" \
             --format=json \
             --out-file infracost-baseline.json
 
@@ -262,8 +265,11 @@ jobs:
         run: |
           git checkout ${{ github.head_ref }}
           terraform init -input=false
+          terraform plan -input=false -out=tfplan-pr.binary
+
           infracost diff \
             --path=. \
+            --terraform-plan-flags="-out=tfplan-pr.binary" \
             --compare-to infracost-baseline.json \
             --format=json \
             --out-file infracost-diff.json
@@ -278,23 +284,14 @@ jobs:
             echo "✅ No infrastructure cost changes detected."
             echo "Generating and posting full cost breakdown for current infrastructure."
             
-            # 전체 비용 스냅샷 생성
-            terraform init -input=false
-            infracost breakdown \
-              --path=. \
-              --format=json \
-              --out-file infracost-full.json
-
-            # 전체 비용 분석 댓글
             infracost comment github \
-              --path=infracost-full.json \
+              --path=infracost-baseline.json \
               --repo=${{ github.repository }} \
               --pull-request=${{ github.event.pull_request.number }} \
               --github-token=${{ secrets.GITHUB_TOKEN }} \
               --behavior=update \
               --tag=infracost-comment
           else
-            # 변경사항이 있을 때는 diff 댓글
             infracost comment github \
               --path=infracost-diff.json \
               --repo=${{ github.repository }} \
