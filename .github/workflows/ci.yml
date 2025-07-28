@@ -252,11 +252,9 @@ jobs:
           git fetch origin ${{ github.base_ref }}
           git checkout origin/${{ github.base_ref }} -- .
           terraform init -input=false
-          terraform plan -input=false -out=tfplan-base.binary
 
           infracost breakdown \
             --path=. \
-            --terraform-plan-file=tfplan-base.binary \
             --format=json \
             --out-file infracost-baseline.json
 
@@ -265,11 +263,9 @@ jobs:
         run: |
           git checkout ${{ github.head_ref }}
           terraform init -input=false
-          terraform plan -input=false -out=tfplan-pr.binary
 
           infracost diff \
             --path=. \
-            --terraform-plan-file=tfplan-pr.binary \
             --compare-to infracost-baseline.json \
             --format=json \
             --out-file infracost-diff.json
