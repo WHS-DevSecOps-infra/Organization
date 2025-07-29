@@ -20,7 +20,8 @@ locals {
     "securityhub",
     "config",
     "dynamodb",
-    "s3"
+    "s3",
+    "guardduty"
   ]
 }
 

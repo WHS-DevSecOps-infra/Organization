@@ -22,7 +22,8 @@ locals {
     "codedeploy",
     "deploy",
     "dynamodb",
-    "s3"
+    "s3",
+    "guardduty"
   ]
 }
 

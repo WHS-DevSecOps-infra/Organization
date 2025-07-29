@@ -16,7 +16,8 @@ locals {
   resources = [
     "cloudtrail",
     "dynamodb",
-    "s3"
+    "s3",
+    "guardduty"
   ]
 }
 
