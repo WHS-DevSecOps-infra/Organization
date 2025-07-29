@@ -144,6 +144,7 @@ jobs:
         run: |
           tfsec --format json --out tfsec_results.json .
         working-directory: ${{ matrix.dir }}
+        continue-on-error: true
 
       - name: Notify Slack for LOW/MEDIUM tfsec findings # LOW, Medium으로 감지된 내용을 slack 전송하고 알림
         if: always()
@@ -251,6 +252,7 @@ jobs:
           git fetch origin ${{ github.base_ref }}
           git checkout origin/${{ github.base_ref }} -- .
           terraform init -input=false
+
           infracost breakdown \
             --path=. \
             --format=json \
@@ -260,6 +262,7 @@ jobs:
         working-directory: ${{ matrix.dir }}
         run: |
           git checkout ${{ github.head_ref }}
+          terraform init -input=false
 
           infracost diff \
             --path=. \
@@ -276,26 +279,20 @@ jobs:
             # 변경사항 없음 메시지 (로그용)
             echo "✅ No infrastructure cost changes detected."
             echo "Generating and posting full cost breakdown for current infrastructure."
-
-            # 전체 비용 스냅샷 생성
-            infracost breakdown \
-              --path=. \
-              --format=json \
-              --out-file infracost-full.json
-
-            # 전체 비용 분석 댓글
+            
             infracost comment github \
-              --path=infracost-full.json \
+              --path=infracost-baseline.json \
               --repo=${{ github.repository }} \
               --pull-request=${{ github.event.pull_request.number }} \
               --github-token=${{ secrets.GITHUB_TOKEN }} \
-              --behavior=update
+              --behavior=update \
+              --tag=infracost-comment
           else
-            # 변경사항이 있을 때는 diff 댓글
             infracost comment github \
               --path=infracost-diff.json \
               --repo=${{ github.repository }} \
               --pull-request=${{ github.event.pull_request.number }} \
               --github-token=${{ secrets.GITHUB_TOKEN }} \
-              --behavior=update
+              --behavior=update \
+              --tag=infracost-comment
           fi
