@@ -37,7 +37,7 @@ resource "aws_organizations_delegated_administrator" "sso_delegate" {
 }
 # Delegate GuardDuty, SecurityHub, Inspector, Detective
 locals {
-  security_services = [
+  operation_services = [
     "guardduty.amazonaws.com",
     "securityhub.amazonaws.com",
     "inspector2.amazonaws.com",
@@ -46,8 +46,8 @@ locals {
 }
 
 resource "aws_organizations_delegated_administrator" "security_delegates" {
-  for_each          = toset(local.security_services)
-  account_id        = aws_organizations_account.security_account.id
+  for_each          = toset(local.operation_services)
+  account_id        = aws_organizations_account.operation_account.id
   service_principal = each.value
 }
 
