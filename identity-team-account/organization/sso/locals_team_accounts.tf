@@ -29,6 +29,8 @@ locals {
   operation_team_admin_accounts = {
     operation_account = data.terraform_remote_state.organization.outputs.operation_account_id
     prod_account      = data.terraform_remote_state.organization.outputs.prod_account_id
+    management_account = data.terraform_remote_state.organization.outputs.management_account_id
+
   }
   operation_team_readonly_accounts = {
     identity_account = data.terraform_remote_state.organization.outputs.identity_account_id,
