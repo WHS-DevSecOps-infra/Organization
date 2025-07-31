@@ -58,6 +58,42 @@ resource "aws_s3_bucket_public_access_block" "state_org_block" {
   restrict_public_buckets = true
 }
 
+# operation 계정에서 organization 상태 파일을 참조할 수 있도록 read-only 접근 허용
+
+data "terraform_remote_state" "org" {
+  backend = "s3"
+  config = {
+    bucket = "cloudfence-management-state"
+    key    = "organization/organizations.tfstate"
+    region = "ap-northeast-2"
+  }
+}
+
+resource "aws_s3_bucket_policy" "allow_operation_read_state" {
+  bucket = "cloudfence-management-state"
+
+  policy = jsonencode({
+    Version = "2012-10-17",
+    Statement = [
+      {
+        Sid: "AllowOperationAccountReadState",
+        Effect: "Allow",
+        Principal = {
+          AWS = "arn:aws:iam::${data.terraform_remote_state.org.outputs.operation_account_id}:root"
+        },
+        Action = [
+          "s3:GetObject",
+          "s3:ListBucket"
+        ],
+        Resource = [
+          "arn:aws:s3:::cloudfence-management-state",
+          "arn:aws:s3:::cloudfence-management-state/organization/organizations.tfstate"
+        ]
+      }
+    ]
+  })
+}
+
 # S3 버킷 서버 측 암호화
 resource "aws_s3_bucket_server_side_encryption_configuration" "encryption" {
   bucket = aws_s3_bucket.state_org.id

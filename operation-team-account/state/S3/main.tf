@@ -10,6 +10,15 @@ provider "aws" {
   region = "ap-northeast-2"
 }
 
+data "terraform_remote_state" "org" {
+  backend = "s3"
+  config = {
+    bucket = "cloudfence-management-state"   
+    key    = "organization/organizations.tfstate"
+    region = "ap-northeast-2"
+  }
+}
+
 # KMS 모듈 호출
 module "s3_kms" {
   source        = "../../../modules/S3_kms"
@@ -69,7 +78,7 @@ resource "aws_s3_bucket_policy" "allow_management_read" {
         Sid    = "AllowManagementAccountReadAccess",
         Effect = "Allow",
         Principal = {
-          AWS = "arn:aws:iam::433331841346:root"
+          AWS = "arn:aws:iam::${data.terraform_remote_state.org.outputs.management_account_id}:root"
         },
         Action = [
           "s3:GetObject",

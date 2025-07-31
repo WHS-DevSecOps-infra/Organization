@@ -1,3 +1,12 @@
+data "terraform_remote_state" "org" {
+  backend = "s3"
+  config = {
+    bucket = "cloudfence-management-state"
+    key    = "organization/organizations.tfstate"
+    region = "ap-northeast-2"
+  }
+}
+
 data "aws_caller_identity" "current" {}
 
 resource "aws_kms_key" "this" {
@@ -42,13 +51,12 @@ resource "aws_kms_key" "this" {
         Effect: "Allow",
         Principal: {
           AWS: [
-            "arn:aws:iam::502676416967:root",           # operation 계정
-            "arn:aws:iam::433331841346:root"            # management 계정
+            "arn:aws:iam::${data.terraform_remote_state.org.outputs.operation_account_id}:root",   
+            "arn:aws:iam::${data.terraform_remote_state.org.outputs.management_account_id}:root"
           ]
         },
         Action: [
           "kms:Decrypt",
-          "kms:DescribeKey",
           "kms:DescribeKey"
         ],
         Resource: "*"
