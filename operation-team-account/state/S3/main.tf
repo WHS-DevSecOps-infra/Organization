@@ -13,7 +13,7 @@ provider "aws" {
 data "terraform_remote_state" "org" {
   backend = "s3"
   config = {
-    bucket = "cloudfence-management-state"   
+    bucket = "cloudfence-management-state"
     key    = "organization/organizations.tfstate"
     region = "ap-northeast-2"
   }

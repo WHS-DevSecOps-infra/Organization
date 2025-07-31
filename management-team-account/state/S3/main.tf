@@ -76,8 +76,8 @@ resource "aws_s3_bucket_policy" "allow_operation_read_state" {
     Version = "2012-10-17",
     Statement = [
       {
-        Sid: "AllowOperationAccountReadState",
-        Effect: "Allow",
+        Sid : "AllowOperationAccountReadState",
+        Effect : "Allow",
         Principal = {
           AWS = "arn:aws:iam::${data.terraform_remote_state.org.outputs.operation_account_id}:root"
         },

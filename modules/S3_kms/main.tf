@@ -47,19 +47,19 @@ resource "aws_kms_key" "this" {
         }
       },
       {
-        Sid: "AllowRootAccountToUseKey",
-        Effect: "Allow",
-        Principal: {
-          AWS: [
-            "arn:aws:iam::${data.terraform_remote_state.org.outputs.operation_account_id}:root",   
+        Sid : "AllowRootAccountToUseKey",
+        Effect : "Allow",
+        Principal : {
+          AWS : [
+            "arn:aws:iam::${data.terraform_remote_state.org.outputs.operation_account_id}:root",
             "arn:aws:iam::${data.terraform_remote_state.org.outputs.management_account_id}:root"
           ]
         },
-        Action: [
+        Action : [
           "kms:Decrypt",
           "kms:DescribeKey"
         ],
-        Resource: "*"
+        Resource : "*"
       }
     ]
   })
