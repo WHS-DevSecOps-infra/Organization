@@ -58,6 +58,32 @@ resource "aws_s3_bucket_public_access_block" "state_org_block" {
   restrict_public_buckets = true
 }
 
+# management 계정에 대한 readonly 권한 추가
+resource "aws_s3_bucket_policy" "allow_management_read" {
+  bucket = aws_s3_bucket.state_org.id
+
+  policy = jsonencode({
+    Version = "2012-10-17",
+    Statement = [
+      {
+        Sid    = "AllowManagementAccountReadAccess",
+        Effect = "Allow",
+        Principal = {
+          AWS = "arn:aws:iam::433331841346:root"
+        },
+        Action = [
+          "s3:GetObject",
+          "s3:ListBucket"
+        ],
+        Resource = [
+          "arn:aws:s3:::cloudfence-operation-state",
+          "arn:aws:s3:::cloudfence-operation-state/*"
+        ]
+      }
+    ]
+  })
+}
+
 # S3 버킷 서버 측 암호화
 resource "aws_s3_bucket_server_side_encryption_configuration" "encryption" {
   bucket = aws_s3_bucket.state_org.id
