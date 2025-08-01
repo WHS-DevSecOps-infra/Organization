@@ -1,3 +1,12 @@
+data "terraform_remote_state" "org" {
+  backend = "s3"
+  config = {
+    bucket = "cloudfence-management-state"
+    key    = "organization/organizations.tfstate"
+    region = "ap-northeast-2"
+  }
+}
+
 data "aws_caller_identity" "current" {}
 
 resource "aws_kms_key" "this" {
@@ -36,6 +45,21 @@ resource "aws_kms_key" "this" {
             "aws:SourceAccount" = data.aws_caller_identity.current.account_id
           }
         }
+      },
+      {
+        Sid : "AllowRootAccountToUseKey",
+        Effect : "Allow",
+        Principal : {
+          AWS : [
+            "arn:aws:iam::${data.terraform_remote_state.org.outputs.operation_account_id}:root",
+            "arn:aws:iam::${data.terraform_remote_state.org.outputs.management_account_id}:root"
+          ]
+        },
+        Action : [
+          "kms:Decrypt",
+          "kms:DescribeKey"
+        ],
+        Resource : "*"
       }
     ]
   })

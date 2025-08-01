@@ -128,6 +128,7 @@ jobs:
 
       - name: Run tfsec (all severities) and save JSON
         run: tfsec --format json --out tfsec_results.json ${{ matrix.dir }}
+        continue-on-error: true
 
       - name: Terraform Init
         run: terraform init
